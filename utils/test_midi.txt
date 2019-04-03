@@ -1,0 +1,3 @@
+aplaymidi -l
+
+aplaymidi -p 16:0 MIDI_sample.mid

@@ -37,7 +37,7 @@ bool i2c_close(i2c_t *i2c) {
 	return true;
 }
 
-bool i2c_read(i2c_t *i2c, char *buffer, int num_bytes) {
+bool i2c_read(i2c_t *i2c, uint8_t *buffer, int num_bytes) {
 	int ret;
 
 	if (!i2c->file)
@@ -48,7 +48,7 @@ bool i2c_read(i2c_t *i2c, char *buffer, int num_bytes) {
 	return (ret == num_bytes);
 }
 
-bool i2c_write(i2c_t *i2c, char *buffer, int num_bytes) {
+bool i2c_write(i2c_t *i2c, uint8_t *buffer, int num_bytes) {
 	int ret;
 
 	if (!i2c->file)

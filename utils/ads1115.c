@@ -151,13 +151,17 @@ void ads_begin_sampling() {
  // #ifdef ADS_DIFFERENTIAL
   //writeBuf[1] = 0x12;  // 0 001 001 0 = AIN3 - AIN0, +-4,096V, continous conversion
   //#else
-  writeBuf[1] = 0x72;  // 0 111 001 0 = AIN0, +-4,096V, continous conversion
+// 0x40 AIN0 POT
+// 0x50 AIN1 HORIZ
+// 0x60 AIN2 VERTICAL
+// 0x70 AIN3 RIBBON
+  writeBuf[1] = 0x60 | 0x02;  // 0 111 001 0 = AIN0, +-4,096V, continous conversion
   //#endif
 
  // #ifdef ADS_DIFFERENTIAL
  // writeBuf[1] = 0x14;  // 0 001 010 0 = AIN3 - AIN0, +-2,048V, continous conversion
  // #else
-  writeBuf[1] = 0x74;  // 0 111 010 0 = AIN0, +-2,048V, continous conversion
+//  writeBuf[1] = 0x40 | 0x04;  // 0 111 010 0 = AIN0, +-2,048V, continous conversion
  // #endif
 
   #if (ADS_SPS == 8)

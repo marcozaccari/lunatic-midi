@@ -10,13 +10,13 @@ unsigned int keyboard_key_offset;
 typedef enum {
 	KEY_OFF = 0,
 	KEY_ON  = 1
-} key_state_t;
+} keyb_state_t;
 
 typedef struct key_tag {
 	int key;
-	key_state_t state;
+	keyb_state_t state;
 	unsigned int velocity;
-} key_t;
+} keyb_t;
 
 
 

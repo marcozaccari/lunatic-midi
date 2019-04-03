@@ -12,24 +12,48 @@
 #include "utils.h"
 
 
-struct termios orig_termios;
+struct termios old_termios;
 
 void reset_terminal_mode() {
-    tcsetattr(0, TCSANOW, &orig_termios);
+    tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
 }
 
 void set_terminal_conio_mode() {
-    struct termios new_termios;
+   struct termios new_termios;
 
-    /* take two copies - one for now, one for later */
-    tcgetattr(0, &orig_termios);
-    memcpy(&new_termios, &orig_termios, sizeof(new_termios));
+   tcgetattr(STDIN_FILENO, &old_termios);
+    
+   memcpy(&new_termios, &old_termios, sizeof(new_termios));
 
-    /* register cleanup handler, and set the new terminal mode */
-    atexit(reset_terminal_mode);
-    cfmakeraw(&new_termios);
-    tcsetattr(0, TCSANOW, &new_termios);
+   /* register cleanup handler, and set the new terminal mode */
+   atexit(reset_terminal_mode);
+   
+   // cfmakeraw(&new_termios);
+   /* ICANON normally takes care that one line at a time will be processed
+    that means it will return if it sees a "\n" or an EOF or an EOL */
+   new_termios.c_lflag &= ~(ICANON | ECHO);
+   
+   tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
 }
+
+void get_selfpath(char* path){
+   char buff[1024];
+    
+	ssize_t len = readlink("/proc/self/exe", buff, sizeof(buff)-1);
+	
+	if (len != -1){
+      char *cutoff = NULL;
+             
+      cutoff = strrchr(buff, '/');
+      *(cutoff+1) = '\0';      //get rid of the +1 if you don't want the trailing / character
+		
+	}else{
+		buff[0] = '\0';
+	}
+	
+   strcpy(path, buff);
+}
+
 
 int kbhit() {
     struct timeval tv = { 0L, 0L };

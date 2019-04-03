@@ -11,12 +11,12 @@
 i2c_t i2c_keyboard;
 
 #define BUFFER_SIZE 256
-key_t keys_buffer[BUFFER_SIZE];
+keyb_t keys_buffer[BUFFER_SIZE];
 unsigned int keys_buffer_head;
 unsigned int keys_buffer_tail;
 
 
-key_t last_key;
+keyb_t last_key;
 
 void parse(uint8_t b) {
 	uint8_t keyb_key_abs, keyb_key;
@@ -47,7 +47,7 @@ void parse(uint8_t b) {
 
 
 void keyboard_debug() {
-	char buffer[256];
+	uint8_t buffer[256];
 	int size;
 
 	if (!i2c_read(&i2c_keyboard, buffer, 1)) {
@@ -76,7 +76,7 @@ void keyboard_debug() {
 }
 
 bool keyboard_do() {
-	char buffer[256];
+	uint8_t buffer[256];
 	int size;
 
 	if (!i2c_read(&i2c_keyboard, buffer, 1))
@@ -99,7 +99,7 @@ bool keyboard_do() {
 }
 
 bool keyboard_init() {
-	char buffer[10];
+	uint8_t buffer[10];
 
 	if (!i2c_open(&i2c_keyboard, 0x30)) {
 		//printf("Cannot open keyboard\r\n");

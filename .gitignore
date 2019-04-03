@@ -8,3 +8,5 @@
 !*/
 
 *.o
+/build/
+/logs/log.txt

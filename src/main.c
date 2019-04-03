@@ -5,186 +5,301 @@
 #include <string.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <wait.h>
 
-#include <stdint.h>
-
-#include "led_monitor.h"
-#include "../lib/i2c.h"
 #include "../lib/utils.h"
+#include "../lib/log.h"
+#include "../lib/exceptions.h"
+
+#include "globals.h"
+#include "main.settings.h"
+#include "threads.h"
 
 
-
-void process_keyboard(uint8_t b) {
-	uint8_t keyb_key_abs, keyb_key;
-	bool keyb_keyon;
-	uint8_t keyb_velocity;
-
-	if ((b & 0x80) == 0x80) {
-		// key
-		keyb_keyon = (b & 0x40) == 0x40;
-
-		keyb_key_abs = (b & 0x3F);
-		keyb_key = keyb_key_abs + 48;
-
-		if (keyb_keyon) {
-			led_monitor_set(keyb_key_abs, LED_BLUE);
-			printf("K%u ", keyb_key);
-		} else {
-			led_monitor_set(keyb_key_abs, LED_OFF);
-			printf("k%u ", keyb_key);
-		}
-
-	} else {
-		// velocity
-		keyb_velocity = 127-b+1;
-
-		printf("V%u ", keyb_velocity);
-
-		/*if (keyb_keyon)
-			midi_note_on(keyb_key, keyb_velocity, b);
-		else
-			midi_note_off(keyb_key, keyb_velocity);*/
+void show_logo(bool version_only){
+	dlog(_LOG_TERMINAL, "Lunatic MIDI-Controller v.%s\n", MIDI_CONTROLLER_VERSION);
+	
+	if (!version_only){
+		dlog(_LOG_TERMINAL, 
+ "             _..-´|\n"
+ "       _..-´´_..-´|\n"
+ "      |_..-´´     |          |\\\n"
+ "      |           |          | \\\n"
+ "      |           |          | ´\n"
+ "      |        __ |          |\n"
+ "      |      ,d88b|          |\n"
+ "   __ |      88888|       __ |\n"
+ " ,d88b|      `Y88P'     ,d88b|\n"
+ " 88888|                 88888|\n"
+ " `Y88P'                 `Y88P'\n");
 	}
 }
 
-
-
-i2c_t i2c_keyboard;
-i2c_t i2c_buttons;
-
-bool read_keyboard() {
-	char buffer[256];
-	int size;
-
-	if (!i2c_read(&i2c_keyboard, buffer, 1)) {
-		//printf("Cannot read keyboard\r\n");
-		return false;
-	}
-
-	size = buffer[0];
-
-	if (size) {
-		printf("KEYB [%u] = ", size);
-
-		if (!i2c_read(&i2c_keyboard, buffer, size+1)) {
-			// printf("Cannot read keyboard\r\n");
-			printf("\r\n");
-			return false;
-		} else {
-			for (int k=1; k < size+1; k++) {
-				//printf("%x ", buffer[k]);
-				if (buffer[k] == 0xFF)
-					printf("- ");
-				else
-					process_keyboard(buffer[k]);
-			}
-			printf("\r\n");
-		}
-	}
-
-	return true;
+void list_args(){
+	show_logo(true);
+	dlog(_LOG_TERMINAL, "usage:");
+	dlog(_LOG_TERMINAL, " midi-controller          - normal start");
+	dlog(_LOG_TERMINAL, " midi-controller debug    - start in debug mode (no fork)");
+	dlog(_LOG_TERMINAL, " midi-controller stop     - terminate the daemon");
+	dlog(_LOG_TERMINAL, " midi-controller config=filename - override config file");
 }
 
-bool read_buttons() {
-	char buffer[256];
-	int size;
-	char b;
+void do_controller() {
+   unsigned char c;
+   int char_count = 0;
+   
+   bool end = false;
+   
+   while (!end) {
+      if (terminal_active) {
+         c = getchar();
 
-	if (!i2c_read(&i2c_buttons, buffer, 1)) {
-		//printf("Cannot read buttons\r\n");
-		return false;
-	}
+         switch (c) {
+            case 'q':
+               end = true;
+               break;
 
-	size = buffer[0];
+            case 'l':
+               if (char_count) {
+                  log_min_level++;
+                  log_min_level %= LOGLEVEL_MAX;
+               } else
+                  log_min_level = _LOG_DEBUG;
 
-	if (size) {
-		printf("BUT [%u] = ", size);
+               dlog(_LOG_TERMINAL, "Logging level: %s", loglevel_name[log_min_level]);
+               break;
+         }
 
-		if (!i2c_read(&i2c_buttons, buffer, size+1)) {
-			// printf("Cannot read buttons\r\n");
-			printf("\r\n");
-			return false;
-		} else {
-			for (int k=1; k < size+1; k++) {
-				//printf("%x ", buffer[k]);
-				if (buffer[k] == 0xFF)
-					printf("- ");
-				else {
-					b = buffer[k];
-					if ((b & 0x80) == 0x80) {
-						b = b & 0x7F;
-						printf("B%u ", b);
-					} else
-						printf("b%u ", b);
-				}
+         char_count++;
+         
+      } else {
+         sleep(5);
+      }
+   }
+}
+
+void start_controller(){
+	
+	log_post_init();
+	
+	dlog(_LOG_NOTICE, "[MAIN] Starting MIDI-Controller v.%s ...", MIDI_CONTROLLER_VERSION);
+	
+   char pid_s[16];
+
+   int pid_file = open(settings.pid_file, O_CREAT | O_RDWR, 0666);
+   int rc = flock(pid_file, LOCK_EX | LOCK_NB);
+   if (rc){
+      if (EWOULDBLOCK == errno) exit(EXIT_FAILURE);
+   }
+
+   sprintf(pid_s, "%ld\n", (long)getpid());
+   write(pid_file, pid_s, strlen(pid_s) + 1);
+
+   if (threads_start()) {
+      do_controller();
+   }
+
+	dlog(_LOG_NOTICE, "[MAIN] Terminating...");
+
+	log_done();
+
+	close(pid_file);
+	unlink(settings.pid_file);
+
+	exit(EXIT_SUCCESS);
+}
+
+void check_params(int argc, char *argv[],
+						bool* debug, 
+						bool* cmd_start, 
+						bool* cmd_stop){
+	int k;
+	char *char_ptr;
+
+	if (argc > 0){
+		for (k = 0; k < argc; k++){
+			if ((strcmp(argv[k], "help") == 0) ||
+				 (strcmp(argv[k], "-help") == 0) ||
+				 (strcmp(argv[k], "--help") == 0) ||
+				 (strcmp(argv[k], "h") == 0) ||
+				 (strcmp(argv[k], "/?") == 0) ||
+				 (strcmp(argv[k], "?") == 0) ||
+				 (strcmp(argv[k], "/help") == 0) ||
+				 (strcmp(argv[k], "/h") == 0)){
+				list_args();
+				exit(0);
+
+			}else	if (strcmp(argv[k], "stop") == 0){
+				*cmd_stop = true;
+				*cmd_start = false;
+
+			}else	if (strcmp(argv[k], "debug") == 0){
+				*debug = true;
+
+			}else	if (strncmp(argv[k], "config=", 7) == 0){
+				char_ptr = argv[k];
+				strcpy(settings_filename, &char_ptr[7]);
 			}
-			printf("\r\n");
+		}
+
+		if (*cmd_stop && *debug){
+			list_args();
+			exit(0);
 		}
 	}
+}
 
-	return true;
+void start_supervisor(bool debug){
+   pid_t cpid, w;
+   int status;
+   bool restart;
+
+   do{
+      //dlog(_LOG_TERMINAL, "fork...");
+
+      if (debug)
+         restart = false;
+      else{
+         cpid = fork();
+         if (cpid == -1){
+            dlog(_LOG_ERROR, "[MAIN] Cannot fork process");
+            exit(EXIT_FAILURE);
+         }
+      }
+
+      if (debug || (cpid == 0)){
+         // **** CHILD PROCESS ****
+         master_process = false;
+         start_controller();
+         break;
+
+      }else{
+         // **** MASTER PROCESS ****
+
+         master_process = true;
+         //log_done_master();
+
+         restart = false;
+         do{
+            w = waitpid(cpid, &status, WUNTRACED | WCONTINUED);
+            if (w == -1){
+               dlog(_LOG_ERROR, "[MAIN] *** MIDI-Controller (master) waitpid error");
+               exit(EXIT_FAILURE);
+            }
+
+            if (WIFEXITED(status)){
+               if (WEXITSTATUS(status) == EXIT_FAILURE){
+                  // self crash
+                  restart = true;
+                  dlog(_LOG_ERROR, "[MAIN] *** exited, status %d", WEXITSTATUS(status));
+               }else
+                  dlog(_LOG_WARNING, "[MAIN] *** exited, status %d", WEXITSTATUS(status));
+
+            }else if (WIFSIGNALED(status)){
+               if (WTERMSIG(status) == 11){
+                  // Segmentation fault
+               }
+               restart = true;
+               dlog(_LOG_ERROR, "[MAIN] *** killed by signal %d", WTERMSIG(status));
+
+            }else if (WIFSTOPPED(status)){
+               dlog(_LOG_WARNING, "[MAIN] *** stopped by signal %d", WSTOPSIG(status));
+
+            }else if (WIFCONTINUED(status)){
+               dlog(_LOG_WARNING, "[MAIN] *** continued");
+            }
+
+         }while (!WIFEXITED(status) && !WIFSIGNALED(status));
+
+         if (restart){
+            dlog(_LOG_ERROR, "[MAIN] *** crash! Restart...");
+            sleep(5);
+         }
+      }
+   }while (restart);
 }
 
 int main(int argc, char *argv[]){
-	char buffer[10];
+	bool cmd_start = true;
+	bool cmd_stop = false;
+	bool debug = false;
+	
+    //This will force malloc to use mmap instead of sbrk(which cause fragmented memory that can't be returned to OS also if freed)
+    //if size is over the specified threshold (4096 = the minimum page size=memory wasted in case of mmap)
+    mallopt(M_MMAP_THRESHOLD, 4096);
+        
+	//exceptions_init(argv[0]);
+    
+   set_terminal_conio_mode();
+	
+	log_init();
+	
+	strcpy(settings_filename, "midi-controller.ini");
+	check_params(argc, argv, &debug, &cmd_start, &cmd_stop);
 
-	set_terminal_conio_mode();
-
-	//mallopt(M_MMAP_THRESHOLD, 0);
-
-	if (!i2c_open(&i2c_keyboard, 0x30)) {
-		printf("Cannot open keyboard\r\n");
-		reset_terminal_mode();
-		return -1;
+	if (cmd_start)
+		show_logo(false);
+	
+	if (debug)
+		printf("- DEBUG mode ON -\r\n");
+	
+	if (terminal_active && !cmd_stop)
+		printf("--- Keyboard: use 'q' for quit, 'l' to change log level\r\n");
+	
+	if (!load_ini_settings(cmd_start)){
+		return 2;
 	}
-	printf("Keyboard opened with handle %u\r\n", i2c_keyboard.file);
+	
+   char pid_s[16];
+   pid_t pid;
+   FILE* fd;
 
-	if (!i2c_open(&i2c_buttons, 0x31)) {
-		printf("Cannot open buttons\r\n");
-		reset_terminal_mode();
-		return -1;
-	}
-	printf("Buttons opened with handle %u\r\n", i2c_buttons.file);
+   int pid_file = open(settings.pid_file, O_CREAT | O_RDWR, 0666);
+   if (!pid_file){
+      dlog(_LOG_ERROR, "PID file '%s' error: %s", settings.pid_file, strerror(errno));
+      exit(1);
+   }
 
-	buffer[0] = 0x80;
-	i2c_write(&i2c_keyboard, buffer, 1);
+   int rc = flock(pid_file, LOCK_EX | LOCK_NB);
+   if (rc != 0){
+      if (EWOULDBLOCK == errno){
+         // another instance is running
 
-	buffer[0] = 0x80;
-	buffer[1] = 0x81;
-	buffer[2] = 0x82;
-	buffer[3] = 0x83;
-	buffer[4] = 0x84;
-	buffer[5] = 0x85;
-	buffer[6] = 0x86;
-	buffer[7] = 0x87;
-	i2c_write(&i2c_buttons, buffer, 8);
+         if (cmd_start){
+            list_args();
+            printf("\n");
+            dlog(_LOG_TERMINAL, "MIDI-Controller already started");
+            exit(1);
+         }
 
-	if (!led_monitor_open()) {
-		printf("Cannot open led monitor\r\n");
-	}
+         if (cmd_stop){
+            fd = fopen(settings.pid_file, "r");
+            if (fd){
+               dlog(_LOG_TERMINAL, "stopping MIDI-Controller");
+               fgets(pid_s, 16, fd);
+               fclose(fd);
+               pid = atol(pid_s);
+               kill(pid, SIGQUIT);
+               exit(0);
+            }
+         }
+      }else{
+         dlog(_LOG_ERROR, "PID lock '%s' error: %s", settings.pid_file, strerror(errno));
+      }
+   }else{
+      // this is the first instance
+      close(pid_file);
+      unlink(settings.pid_file);
 
-	//led_monitor_fill(LED_RED);
+      if (cmd_stop){
+         dlog(_LOG_TERMINAL, "MIDI-Controller not started");
+      }
 
-	while (!kbhit()) {
-		read_keyboard();
-		usleep(1000);
-		read_buttons();
-		read_keyboard();
-
-		//sleep(1);
-		//usleep(500000);
-		usleep(1000);
-
-		led_monitor_do();
-	}
-
-	i2c_close(&i2c_keyboard);
-	i2c_close(&i2c_buttons);
-
-	led_monitor_close();
-
-	reset_terminal_mode();
+      if (cmd_start){
+         start_supervisor(debug);
+         exit(EXIT_SUCCESS);
+      }
+   }
 
 	return EXIT_SUCCESS;
 }
-

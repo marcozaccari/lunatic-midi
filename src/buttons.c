@@ -15,7 +15,7 @@ bool buttons[BUTTONS_COUNT];
 
 
 void buttons_debug() {
-	char buffer[256];
+	unsigned char buffer[256];
 	int size;
 
 	if (!i2c_read(&i2c_buttons, buffer, 1)) {
@@ -44,7 +44,7 @@ void buttons_debug() {
 }
 
 bool buttons_do() {
-	char buffer[256];
+	uint8_t buffer[256];
 	int size;
 	uint8_t b;
 
@@ -75,22 +75,16 @@ bool buttons_do() {
 }
 
 bool buttons_init() {
-	//char buffer[10];
+	uint8_t buffer[10];
 
 	if (!i2c_open(&i2c_buttons, 0x31)) {
 		//printf("Cannot open buttons\r\n");
 		return false;
 	}
 
-	/*buffer[0] = 0x80;
-	buffer[1] = 0x81;
-	buffer[2] = 0x82;
-	buffer[3] = 0x83;
-	buffer[4] = 0x84;
-	buffer[5] = 0x85;
-	buffer[6] = 0x86;
-	buffer[7] = 0x87;
-	i2c_write(&i2c_buttons, buffer, 8);*/
+	// Reset leds
+	buffer[0] = 0xFF;
+	i2c_write(&i2c_buttons, buffer, 1);
 
 	return true;
 }
