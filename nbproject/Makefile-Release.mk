@@ -39,6 +39,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/lib/i2c.o \
 	${OBJECTDIR}/lib/ipc.o \
 	${OBJECTDIR}/lib/log.o \
+	${OBJECTDIR}/lib/midi.o \
 	${OBJECTDIR}/lib/utils.o \
 	${OBJECTDIR}/lib/zini.o \
 	${OBJECTDIR}/src/adc.o \
@@ -48,7 +49,9 @@ OBJECTFILES= \
 	${OBJECTDIR}/src/led_monitor.o \
 	${OBJECTDIR}/src/main.o \
 	${OBJECTDIR}/src/main.settings.o \
-	${OBJECTDIR}/src/threads.o
+	${OBJECTDIR}/src/threads.o \
+	${OBJECTDIR}/src/threads.devices.o \
+	${OBJECTDIR}/src/threads.midi.o
 
 
 # C Compiler Flags
@@ -72,7 +75,7 @@ LDLIBSOPTIONS=
 	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk midi-controller
 
 midi-controller: ${OBJECTFILES}
-	${LINK.cc} -o midi-controller ${OBJECTFILES} ${LDLIBSOPTIONS}
+	${LINK.cc} -o midi-controller ${OBJECTFILES} ${LDLIBSOPTIONS} -lasound -lpthread
 
 ${OBJECTDIR}/lib/exceptions.o: lib/exceptions.c
 	${MKDIR} -p ${OBJECTDIR}/lib
@@ -93,6 +96,11 @@ ${OBJECTDIR}/lib/log.o: lib/log.c
 	${MKDIR} -p ${OBJECTDIR}/lib
 	${RM} "$@.d"
 	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/lib/log.o lib/log.c
+
+${OBJECTDIR}/lib/midi.o: lib/midi.c
+	${MKDIR} -p ${OBJECTDIR}/lib
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/lib/midi.o lib/midi.c
 
 ${OBJECTDIR}/lib/utils.o: lib/utils.c
 	${MKDIR} -p ${OBJECTDIR}/lib
@@ -143,6 +151,16 @@ ${OBJECTDIR}/src/threads.o: src/threads.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
 	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/threads.o src/threads.c
+
+${OBJECTDIR}/src/threads.devices.o: src/threads.devices.c
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/threads.devices.o src/threads.devices.c
+
+${OBJECTDIR}/src/threads.midi.o: src/threads.midi.c
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/threads.midi.o src/threads.midi.c
 
 # Subprojects
 .build-subprojects:

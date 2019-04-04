@@ -100,7 +100,7 @@ bool init(ipc_callback_t callback, int port, int sleep_secs) {
     FD_ZERO(&savedset); // initialize the descriptor set to be monitored to empty
     FD_SET(listen_desc, &savedset); // add the current listening descriptor to the monitored set
 
-    dlog(_LOG_TERMINAL, "IPC server started on port %u", port);
+    dlog(_LOG_NOTICE, "IPC server started on port %u", port);
     return true;
 }
 

@@ -7,54 +7,19 @@
 #include "../lib/log.h"
 #include "main.settings.h"
 #include "threads.h"
+#include "threads.devices.h"
+#include "threads.midi.h"
 
-#define THREADS_MAX 2
-
-enum threads_names {
-   MAIN_THREAD,
-   DEVICES_THREAD,
-};
 
 pthread_t threads[THREADS_MAX];
-
-bool should_terminate;
-bool threads_terminated[THREADS_MAX];
-
-
-void* main_thread() {
-   threads_terminated[MAIN_THREAD] = false;
-
-   for (;;) {
-      dlog(_LOG_DEBUG, "Main thread fired!");
-      sleep(3);
-      
-      if (should_terminate)
-         break;
-   }
-
-   threads_terminated[MAIN_THREAD] = true;
-   return NULL;
-}
-
-void* devices_thread() {
-   threads_terminated[DEVICES_THREAD] = false;
-
-   for (;;) {
-      dlog(_LOG_DEBUG, "Devices thread fired!");
-      sleep(1);
-
-      if (should_terminate)
-         break;
-   }
-
-   threads_terminated[DEVICES_THREAD] = true;
-   return NULL;
-}
 
 
 bool threads_start() {
    int err;
 
+   if (!devices_thread_init())
+      return false;
+   threads_terminated[DEVICES_THREAD] = false;
    err = pthread_create(&threads[DEVICES_THREAD], NULL, &devices_thread, NULL);
    if (err == 0)
       dlog(_LOG_TERMINAL, "Devices thread created");
@@ -63,11 +28,14 @@ bool threads_start() {
       return false;
    }
 
-   err = pthread_create(&threads[MAIN_THREAD], NULL, &main_thread, NULL);
+   if (!midi_thread_init())
+      return false;
+   threads_terminated[MIDI_THREAD] = false;
+   err = pthread_create(&threads[MIDI_THREAD], NULL, &midi_thread, NULL);
    if (err == 0)
-      dlog(_LOG_TERMINAL, "Main thread created");
+      dlog(_LOG_TERMINAL, "MIDI thread created");
    else {
-      dlog(_LOG_ERROR, "Can't create main thread: %s", strerror(err));
+      dlog(_LOG_ERROR, "Can't create MIDI thread: %s", strerror(err));
       return false;
    }
    
@@ -93,7 +61,7 @@ void threads_stop() {
    }
    
    if (all_terminated)
-      dlog(_LOG_TERMINAL, "All thread terminated");
+      dlog(_LOG_INFO, "All threads terminated");
    else
-      dlog(_LOG_TERMINAL, "Reached timeout: forcing ending");
+      dlog(_LOG_WARNING, "Reached threads timeout: forcing ending");
 }

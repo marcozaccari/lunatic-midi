@@ -24,10 +24,9 @@ CCFLAGS = -g \
 #          -I. \
 #          -DUSE_LIBUV
 
-LINK_FLAGS =
-#LINK_FLAGS = \
-#             -lssl -lcrypto
-#             -lssl -lcrypto
+#LINK_FLAGS =
+LINK_FLAGS = \
+             -lasound -lpthread
 
 INCLUDES =
 #INCLUDES = src/netstructs.h
@@ -42,10 +41,13 @@ OBJS_C = \
          lib/log.o \
          lib/utils.o \
          lib/i2c.o \
+         lib/midi.o \
          src/buttons.o \
          src/keyboard.o \
          src/led_monitor.o \
          src/threads.o \
+         src/threads.devices.o \
+         src/threads.midi.o \
          src/console.o \
          src/main.settings.o \
          src/main.o

@@ -19,6 +19,8 @@ static bool load_by_ini(const char* filename, bool should_start){
 		log_min_level = zini_readinteger("LOGGING", "LOG MIN LEVEL", log_min_level);
 		zini_readstring(log_filename, "LOGGING", "LOG FILE", log_filename);
 		log_to_syslog = zini_readboolean("LOGGING", "SYSLOG", log_to_syslog);
+      
+		zini_readstring(settings.midi_portname, "MIDI", "PORT NAME", settings.midi_portname);
 
 		if (should_start)
 			dlog(_LOG_TERMINAL, "%s settings loaded", filename);

@@ -18,6 +18,7 @@
 #include "../lib/utils.h"
 #include "../lib/exceptions.h"
 #include "../lib/log.h"
+#include "../lib/midi.h"
 
 #include "globals.h"
 #include "main.settings.h"
@@ -47,10 +48,11 @@ void show_logo(bool version_only){
 void list_args(){
 	show_logo(true);
 	dlog(_LOG_TERMINAL, "usage:");
-	dlog(_LOG_TERMINAL, " midi-controller          - normal start");
-	dlog(_LOG_TERMINAL, " midi-controller debug    - start in debug mode (no fork)");
-	dlog(_LOG_TERMINAL, " midi-controller stop     - terminate the daemon");
+	dlog(_LOG_TERMINAL, " midi-controller                 - normal start");
+	dlog(_LOG_TERMINAL, " midi-controller debug           - start in debug mode (no fork)");
+	dlog(_LOG_TERMINAL, " midi-controller stop            - terminate the daemon");
 	dlog(_LOG_TERMINAL, " midi-controller config=filename - override config file");
+	dlog(_LOG_TERMINAL, " midi-controller midiports       - show MIDI ports on this system");
 }
 
 void signal_handler(int signo) {
@@ -102,8 +104,10 @@ void start_controller(){
    signal(SIGQUIT, signal_handler);
    signal(SIGINT, signal_handler);
    
-   if (!threads_start())
+   if (!threads_start()) {
+      threads_stop();
       exit(EXIT_FAILURE);
+   }
 
    if (!console_loop())  // main loop
       exit(EXIT_FAILURE);
@@ -138,7 +142,7 @@ void check_params(int argc, char *argv[],
 				 (strcmp(argv[k], "/help") == 0) ||
 				 (strcmp(argv[k], "/h") == 0)){
 				list_args();
-				exit(0);
+				exit(EXIT_SUCCESS);
 
 			}else	if (strcmp(argv[k], "stop") == 0){
 				*cmd_stop = true;
@@ -150,6 +154,11 @@ void check_params(int argc, char *argv[],
 			}else	if (strncmp(argv[k], "config=", 7) == 0){
 				char_ptr = argv[k];
 				strcpy(settings_filename, &char_ptr[7]);
+
+			}else	if (strcmp(argv[k], "midiports") == 0){
+				print_midi_ports();
+            exit(EXIT_SUCCESS);
+
 			}
 		}
 

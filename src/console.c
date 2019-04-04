@@ -24,7 +24,7 @@ void log_cb(char* s) {
       ipc_send_debug(s);
 }
 
-bool ipc_parse(char *msg, uint8_t client_id) {
+bool ipc_parse_command(char *msg, uint8_t client_id) {
    if (strcmp(msg, "debug") == 0) {
       if (ipc_debug_connected())
          change_log_mode(false);
@@ -80,7 +80,7 @@ bool console_loop() {
    else
       ipc_sleep_secs = 5;
    
-   if (!ipc_init(ipc_parse, settings.ipc_port, ipc_sleep_secs))
+   if (!ipc_init(ipc_parse_command, settings.ipc_port, ipc_sleep_secs))
       return false;
    
    client_log_callback = log_cb;

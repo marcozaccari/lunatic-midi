@@ -1,8 +1,10 @@
-#ifndef bool
+#include "utils.h"
+
+/*#ifndef bool
     #define bool int
     #define true 1
     #define false 0
-#endif
+#endif*/
 
 void zini_readstring(char* outstr, const char* fsection, const char* fitem, const char* def_notfound);
 int zini_readinteger(const char* fsection, const char* fitem, int def_notfound);

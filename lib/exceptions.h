@@ -5,8 +5,8 @@
  * Created on 20 luglio 2016, 18.06
  */
 
-#ifndef EXCEPTIONS_H
-#define EXCEPTIONS_H
+#ifndef _EXCEPTIONS_H
+#define _EXCEPTIONS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,5 +18,5 @@ void exceptions_init();
 }
 #endif
 
-#endif /* EXCEPTIONS_H */
+#endif /* _EXCEPTIONS_H */
 

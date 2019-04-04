@@ -1,5 +1,5 @@
-#ifndef _IPC
-#define _IPC
+#ifndef _IPC_H
+#define _IPC_H
 
 #include <stdio.h>
 #include <stdlib.h>
