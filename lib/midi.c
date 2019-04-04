@@ -94,7 +94,7 @@ bool midi_init() {
    return true;
 }
 
-bool midi_note_on(uint8_t note, uint8_t velocity, uint8_t raw) {
+bool midi_note_on(uint8_t note, uint8_t velocity) {
    int status;
    char msg[3];
    uint8_t calc_velocity;
@@ -105,9 +105,9 @@ bool midi_note_on(uint8_t note, uint8_t velocity, uint8_t raw) {
    msg[1] = note;
    msg[2] = calc_velocity;
 
-   printf("Note ON: %u %u 0x%02X [0x%02X] (%u 0x%02X "BYTE_TO_BINARY_PATTERN")\n", note, velocity, velocity, calc_velocity, raw, raw, BYTE_TO_BINARY(raw));
+   //printf("Note ON: %u %u 0x%02X [0x%02X] (%u 0x%02X "BYTE_TO_BINARY_PATTERN")\n", note, velocity, velocity, calc_velocity, raw, raw, BYTE_TO_BINARY(raw));
    if ((status = snd_rawmidi_write(midiport, msg, 3)) < 0)
-	return false; // snd_strerror(status)
+      return false; // snd_strerror(status)
 
    return true;
 }
@@ -121,10 +121,10 @@ bool midi_note_off(uint8_t note, uint8_t velocity) {
    msg[1] = note;
    msg[2] = 0;
 
-//    printf("Note OFF: %u %u\n", note, velocity);
+   //printf("Note OFF: %u %u\n", note, velocity);
 
    if ((status = snd_rawmidi_write(midiport, msg, 3)) < 0)
-	return false; // snd_strerror(status)
+      return false; // snd_strerror(status)
 
    return true;
 }
@@ -351,6 +351,47 @@ void list_midi_devices_on_card(int card) {
 
 //////////////////////////////
 //
+// print_card_list -- go through the list of available "soundcards"
+//   in the ALSA system, printing their associated numbers and names.
+//   Cards may or may not have any MIDI ports available on them (for 
+//   example, a card might only have an audio interface).
+//
+
+void print_card_list(void) {
+   int status;
+   int card = -1;  // use -1 to prime the pump of iterating through card list
+   char* longname  = NULL;
+   char* shortname = NULL;
+
+   if ((status = snd_card_next(&card)) < 0) {
+      error("cannot determine card number: %s", snd_strerror(status));
+      return;
+   }
+   if (card < 0) {
+      error("no sound cards found");
+      return;
+   }
+   while (card >= 0) {
+      printf("Card %d:", card);
+      if ((status = snd_card_get_name(card, &shortname)) < 0) {
+         error("cannot determine card shortname: %s", snd_strerror(status));
+         break;
+      }
+      if ((status = snd_card_get_longname(card, &longname)) < 0) {
+         error("cannot determine card longname: %s", snd_strerror(status));
+         break;
+      }
+      printf("\tLONG NAME:  %s\n", longname);
+      printf("\tSHORT NAME: %s\n", shortname);
+      if ((status = snd_card_next(&card)) < 0) {
+         error("cannot determine card number: %s", snd_strerror(status));
+         break;
+      }
+   } 
+}
+
+//////////////////////////////
+//
 // print_midi_ports -- go through the list of available "soundcards",
 //   checking them to see if there are devices/subdevices on them which
 //   can read/write MIDI data.
@@ -359,6 +400,8 @@ void list_midi_devices_on_card(int card) {
 void print_midi_ports(void) {
    int status;
    int card = -1;  // use -1 to prime the pump of iterating through card list
+   
+   print_card_list();  // prints a list of all card devices (not only MIDI)
 
    if ((status = snd_card_next(&card)) < 0) {
       error("cannot determine card number: %s", snd_strerror(status));

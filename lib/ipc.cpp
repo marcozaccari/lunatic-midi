@@ -254,9 +254,6 @@ void debug_clear(){
 extern "C" {
     #include "ipc.h"
 
-    uint32_t ipc_port;
-    ipc_callback_c ipc_callback;
-
     bool ipc_init(ipc_callback_c callback, int port, int sleep_secs){
         ipc::ipc_callback = callback;
         return ipc::init(NULL, port, sleep_secs);

@@ -5,6 +5,7 @@
 
 #include "../lib/log.h"
 #include "../lib/ipc.h"
+#include "../lib/midi.h"
 #include "main.settings.h"
 
 
@@ -56,6 +57,13 @@ void console_keyboard_do() {
 
          case 'l':
             change_log_mode(console_keyboard_char_count == 0);
+            break;
+            
+         case '1':
+            dlog(_LOG_TERMINAL, "test note 40");
+            midi_note_on(40, 0x80);
+            sleep(1);
+            midi_note_off(40, 0);
             break;
             
          /*case '/':
