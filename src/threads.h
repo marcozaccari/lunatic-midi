@@ -4,5 +4,6 @@
 #include "../lib/utils.h"
 
 bool threads_start();
+void threads_stop();
 
 #endif

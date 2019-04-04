@@ -10,11 +10,8 @@
 char settings_filename[STR_MAXSIZE];
 
 typedef struct settings_tag {
-    char log_filename[STR_MAXSIZE];
-    int log_min_level;
-    bool log_to_syslog;
-
     char pid_file[STR_MAXSIZE];
+    int ipc_port;
 } settings_t;
 settings_t settings;
 

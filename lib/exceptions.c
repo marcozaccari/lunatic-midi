@@ -87,10 +87,11 @@ void handler(int sig_num, siginfo_t* info, void* ucontext) {
 	exit(EXIT_FAILURE);
 }
 
-void exceptions_init(const char* prog_name) {
+void exceptions_init() {
 	struct sigaction sig_action;
 	sig_action.sa_flags = SA_SIGINFO;
-	sig_action.sa_handler = (void(*)(int))handler;
+	//sig_action.sa_handler = (void(*)(int))handler;
+	sig_action.sa_handler = (void*)handler;
 
 	#ifdef USE_ALTSTACK
 	stack_t ss = {};

@@ -18,7 +18,7 @@ void reset_terminal_mode() {
     tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
 }
 
-void set_terminal_conio_mode() {
+void set_terminal_non_canonical() {
    struct termios new_termios;
 
    tcgetattr(STDIN_FILENO, &old_termios);
@@ -30,7 +30,7 @@ void set_terminal_conio_mode() {
    
    // cfmakeraw(&new_termios);
    /* ICANON normally takes care that one line at a time will be processed
-    that means it will return if it sees a "\n" or an EOF or an EOL */
+      that means it will return if it sees a "\n" or an EOF or an EOL */
    new_termios.c_lflag &= ~(ICANON | ECHO);
    
    tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
@@ -55,7 +55,7 @@ void get_selfpath(char* path){
 }
 
 
-int kbhit() {
+bool kbhit() {
     struct timeval tv = { 0L, 0L };
 
     fd_set fds;

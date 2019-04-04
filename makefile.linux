@@ -46,11 +46,13 @@ OBJS_C = \
          src/keyboard.o \
          src/led_monitor.o \
          src/threads.o \
+         src/console.o \
          src/main.settings.o \
          src/main.o
 
 OBJS_CPP = \
-         lib/zini.o
+         lib/zini.o \
+         lib/ipc.o
 
 LINKS_LIBS =
 #LINK_LIBS = -luv \

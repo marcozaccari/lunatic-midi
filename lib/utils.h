@@ -1,19 +1,21 @@
 #ifndef _UTILS
 #define _UTILS
 
-#ifndef bool
+#include <stdbool.h>
+
+/*#ifndef bool
     #define bool int
     #define true 1
     #define false 0
-#endif
+#endif*/
 
 #define STR_MAXSIZE 256
 
 
 void reset_terminal_mode();
-void set_terminal_conio_mode();
+void set_terminal_non_canonical();
 
-int kbhit();
+bool kbhit();
 
 void get_selfpath(char* path);
 

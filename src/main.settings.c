@@ -8,11 +8,13 @@
 
 static void set_default_settings() {
 	settings.pid_file[0] = 0;
+   settings.ipc_port = 6666;
 }
 
 static bool load_by_ini(const char* filename, bool should_start){
 	if (zini_init(filename)){
 		zini_readstring(settings.pid_file, "MAIN", "PID FILE", settings.pid_file);
+		settings.ipc_port = zini_readinteger("MAIN", "IPC PORT", settings.ipc_port);
 		
 		log_min_level = zini_readinteger("LOGGING", "LOG MIN LEVEL", log_min_level);
 		zini_readstring(log_filename, "LOGGING", "LOG FILE", log_filename);

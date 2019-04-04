@@ -17,6 +17,9 @@
         <itemPath>lib/exceptions.h</itemPath>
         <itemPath>lib/i2c.c</itemPath>
         <itemPath>lib/i2c.h</itemPath>
+        <itemPath>lib/ipc.cpp</itemPath>
+        <itemPath>lib/ipc.h</itemPath>
+        <itemPath>lib/ipc.hpp</itemPath>
         <itemPath>lib/log.c</itemPath>
         <itemPath>lib/log.h</itemPath>
         <itemPath>lib/utils.c</itemPath>
@@ -30,6 +33,8 @@
         <itemPath>src/adc.h</itemPath>
         <itemPath>src/buttons.c</itemPath>
         <itemPath>src/buttons.h</itemPath>
+        <itemPath>src/console.c</itemPath>
+        <itemPath>src/console.h</itemPath>
         <itemPath>src/globals.h</itemPath>
         <itemPath>src/keyboard.c</itemPath>
         <itemPath>src/keyboard.h</itemPath>
@@ -86,6 +91,12 @@
       </item>
       <item path="lib/i2c.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="lib/ipc.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="lib/ipc.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/ipc.hpp" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="lib/log.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="lib/log.h" ex="false" tool="3" flavor2="0">
@@ -107,6 +118,10 @@
       <item path="src/buttons.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/buttons.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/console.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/console.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/globals.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -164,6 +179,12 @@
       </item>
       <item path="lib/i2c.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="lib/ipc.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="lib/ipc.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/ipc.hpp" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="lib/log.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="lib/log.h" ex="false" tool="3" flavor2="0">
@@ -185,6 +206,10 @@
       <item path="src/buttons.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/buttons.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/console.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/console.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/globals.h" ex="false" tool="3" flavor2="0">
       </item>

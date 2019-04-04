@@ -37,11 +37,13 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/lib/exceptions.o \
 	${OBJECTDIR}/lib/i2c.o \
+	${OBJECTDIR}/lib/ipc.o \
 	${OBJECTDIR}/lib/log.o \
 	${OBJECTDIR}/lib/utils.o \
 	${OBJECTDIR}/lib/zini.o \
 	${OBJECTDIR}/src/adc.o \
 	${OBJECTDIR}/src/buttons.o \
+	${OBJECTDIR}/src/console.o \
 	${OBJECTDIR}/src/keyboard.o \
 	${OBJECTDIR}/src/led_monitor.o \
 	${OBJECTDIR}/src/main.o \
@@ -82,6 +84,11 @@ ${OBJECTDIR}/lib/i2c.o: lib/i2c.c
 	${RM} "$@.d"
 	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/lib/i2c.o lib/i2c.c
 
+${OBJECTDIR}/lib/ipc.o: lib/ipc.cpp
+	${MKDIR} -p ${OBJECTDIR}/lib
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/lib/ipc.o lib/ipc.cpp
+
 ${OBJECTDIR}/lib/log.o: lib/log.c
 	${MKDIR} -p ${OBJECTDIR}/lib
 	${RM} "$@.d"
@@ -106,6 +113,11 @@ ${OBJECTDIR}/src/buttons.o: src/buttons.c
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
 	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/buttons.o src/buttons.c
+
+${OBJECTDIR}/src/console.o: src/console.c
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/console.o src/console.c
 
 ${OBJECTDIR}/src/keyboard.o: src/keyboard.c
 	${MKDIR} -p ${OBJECTDIR}/src

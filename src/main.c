@@ -1,3 +1,11 @@
+/* TODO: 
+ * - IPC
+ * - emulazione devices via terminale
+ * - scheduler threads
+ * - MIDI
+ * - ...
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/file.h>
@@ -8,11 +16,12 @@
 #include <wait.h>
 
 #include "../lib/utils.h"
-#include "../lib/log.h"
 #include "../lib/exceptions.h"
+#include "../lib/log.h"
 
 #include "globals.h"
 #include "main.settings.h"
+#include "console.h"
 #include "threads.h"
 
 
@@ -44,41 +53,32 @@ void list_args(){
 	dlog(_LOG_TERMINAL, " midi-controller config=filename - override config file");
 }
 
-void do_controller() {
-   unsigned char c;
-   int char_count = 0;
-   
-   bool end = false;
-   
-   while (!end) {
-      if (terminal_active) {
-         c = getchar();
+void signal_handler(int signo) {
+   //signal(signo, SIG_IGN);
 
-         switch (c) {
-            case 'q':
-               end = true;
-               break;
-
-            case 'l':
-               if (char_count) {
-                  log_min_level++;
-                  log_min_level %= LOGLEVEL_MAX;
-               } else
-                  log_min_level = _LOG_DEBUG;
-
-               dlog(_LOG_TERMINAL, "Logging level: %s", loglevel_name[log_min_level]);
-               break;
-         }
-
-         char_count++;
+   switch (signo) {
+      case SIGTERM:
+         dlog(_LOG_WARNING, "Received SIGTERM");
+         should_terminate = true;
+         break;
          
-      } else {
-         sleep(5);
-      }
+      case SIGINT:
+         //signal(SIGINT, signal_handler);
+         dlog(_LOG_WARNING, "Received SIGINT");
+         should_terminate = true;
+         break;
+
+      case SIGQUIT:
+         dlog(_LOG_WARNING, "Received SIGQUIT");
+         should_terminate = true;
+         break;
    }
 }
 
+
 void start_controller(){
+   if (terminal_active)
+      set_terminal_non_canonical();  // need to re-set on crash too
 	
 	log_post_init();
 	
@@ -89,17 +89,28 @@ void start_controller(){
    int pid_file = open(settings.pid_file, O_CREAT | O_RDWR, 0666);
    int rc = flock(pid_file, LOCK_EX | LOCK_NB);
    if (rc){
-      if (EWOULDBLOCK == errno) exit(EXIT_FAILURE);
+      if (EWOULDBLOCK == errno)
+         exit(EXIT_FAILURE);
    }
 
    sprintf(pid_s, "%ld\n", (long)getpid());
    write(pid_file, pid_s, strlen(pid_s) + 1);
+   
+   should_terminate = false;
+   
+   signal(SIGTERM, signal_handler);
+   signal(SIGQUIT, signal_handler);
+   signal(SIGINT, signal_handler);
+   
+   if (!threads_start())
+      exit(EXIT_FAILURE);
 
-   if (threads_start()) {
-      do_controller();
-   }
-
+   if (!console_loop())  // main loop
+      exit(EXIT_FAILURE);
+   
 	dlog(_LOG_NOTICE, "[MAIN] Terminating...");
+
+   threads_stop();
 
 	log_done();
 
@@ -224,14 +235,12 @@ int main(int argc, char *argv[]){
 	bool cmd_stop = false;
 	bool debug = false;
 	
-    //This will force malloc to use mmap instead of sbrk(which cause fragmented memory that can't be returned to OS also if freed)
-    //if size is over the specified threshold (4096 = the minimum page size=memory wasted in case of mmap)
-    mallopt(M_MMAP_THRESHOLD, 4096);
+   //This will force malloc to use mmap instead of sbrk(which cause fragmented memory that can't be returned to OS also if freed)
+   //if size is over the specified threshold (4096 = the minimum page size=memory wasted in case of mmap)
+   mallopt(M_MMAP_THRESHOLD, 4096);
         
-	//exceptions_init(argv[0]);
+	exceptions_init();
     
-   set_terminal_conio_mode();
-	
 	log_init();
 	
 	strcpy(settings_filename, "midi-controller.ini");
