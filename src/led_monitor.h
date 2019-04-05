@@ -1,6 +1,7 @@
 #ifndef _LED_MONITOR_H
 #define _LED_MONITOR_H
 
+#include <stdint.h>
 #include "../lib/utils.h"
 
 #define LED_OFF 	0
@@ -13,8 +14,8 @@
 #define LED_WHITE	7
 
 
-bool led_monitor_open();
-bool led_monitor_close();
+bool led_monitor_init();
+bool led_monitor_done();
 
 bool led_monitor_do();
 

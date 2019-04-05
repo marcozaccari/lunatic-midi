@@ -15,7 +15,7 @@ uint8_t framebuffer[LEDS_COUNT];
 uint8_t framebuffer_old[LEDS_COUNT];
 
 
-bool led_monitor_open() {
+bool led_monitor_init() {
    if (!i2c_open(&i2c_led, 0x33)) {
       //printf("Cannot open leds\r\n");
       return false;
@@ -35,7 +35,7 @@ bool led_monitor_open() {
 	return true;
 }
 
-bool led_monitor_close() {
+bool led_monitor_done() {
 	return i2c_close(&i2c_led);
 }
 

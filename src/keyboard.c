@@ -41,6 +41,7 @@ void parse(uint8_t b) {
 		last_key.velocity = 127-b+1;
 
 		keys_buffer[keys_buffer_head] = last_key;
+      keys_buffer_head++;
 	}
 }
 

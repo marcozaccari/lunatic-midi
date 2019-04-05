@@ -267,3 +267,16 @@ if ((val > val_old+1) || (val < val_old-1)) {
   return 0;
 
 }*/
+
+
+bool adc_do() {
+   return true;
+}
+
+bool adc_init() {
+   return true;
+}
+
+bool adc_done() {
+   return true;
+}

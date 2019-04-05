@@ -15,6 +15,8 @@
       <logicalFolder name="lib" displayName="lib" projectFiles="true">
         <itemPath>lib/exceptions.c</itemPath>
         <itemPath>lib/exceptions.h</itemPath>
+        <itemPath>lib/gpio.c</itemPath>
+        <itemPath>lib/gpio.h</itemPath>
         <itemPath>lib/i2c.c</itemPath>
         <itemPath>lib/i2c.h</itemPath>
         <itemPath>lib/ipc.cpp</itemPath>
@@ -87,12 +89,16 @@
         </ccTool>
         <linkerTool>
           <output>midi-controller</output>
-          <commandLine>-lasound -lpthread</commandLine>
+          <commandLine>-lasound -lpthread -lrt</commandLine>
         </linkerTool>
       </compileType>
       <item path="lib/exceptions.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="lib/exceptions.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/gpio.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="lib/gpio.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="lib/i2c.c" ex="false" tool="0" flavor2="0">
       </item>
@@ -188,12 +194,16 @@
         </asmTool>
         <linkerTool>
           <output>midi-controller</output>
-          <commandLine>-lasound -lpthread</commandLine>
+          <commandLine>-lasound -lpthread -lrt</commandLine>
         </linkerTool>
       </compileType>
       <item path="lib/exceptions.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="lib/exceptions.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/gpio.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="lib/gpio.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="lib/i2c.c" ex="false" tool="0" flavor2="0">
       </item>

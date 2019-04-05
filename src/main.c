@@ -2,6 +2,7 @@
  * - IPC
  * - emulazione devices via terminale
  * - scheduler threads
+ * - gpio
  * - MIDI
  * - ...
  */
@@ -19,6 +20,7 @@
 #include "../lib/exceptions.h"
 #include "../lib/log.h"
 #include "../lib/midi.h"
+#include "../lib/gpio.h"
 
 #include "globals.h"
 #include "main.settings.h"
@@ -87,6 +89,10 @@ void start_controller(){
 	dlog(_LOG_NOTICE, "[MAIN] Starting MIDI-Controller v.%s ...", MIDI_CONTROLLER_VERSION);
 	
    char pid_s[16];
+
+   if (!gpio_init())
+      exit(EXIT_FAILURE);
+   gpio_set_pin_to_output(DEBUG_LED_GPIO);
 
    int pid_file = open(settings.pid_file, O_CREAT | O_RDWR, 0666);
    int rc = flock(pid_file, LOCK_EX | LOCK_NB);

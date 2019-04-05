@@ -36,6 +36,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/lib/exceptions.o \
+	${OBJECTDIR}/lib/gpio.o \
 	${OBJECTDIR}/lib/i2c.o \
 	${OBJECTDIR}/lib/ipc.o \
 	${OBJECTDIR}/lib/log.o \
@@ -75,12 +76,17 @@ LDLIBSOPTIONS=
 	"${MAKE}"  -f nbproject/Makefile-${CND_CONF}.mk midi-controller
 
 midi-controller: ${OBJECTFILES}
-	${LINK.cc} -o midi-controller ${OBJECTFILES} ${LDLIBSOPTIONS} -lasound -lpthread
+	${LINK.cc} -o midi-controller ${OBJECTFILES} ${LDLIBSOPTIONS} -lasound -lpthread -lrt
 
 ${OBJECTDIR}/lib/exceptions.o: lib/exceptions.c
 	${MKDIR} -p ${OBJECTDIR}/lib
 	${RM} "$@.d"
 	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/lib/exceptions.o lib/exceptions.c
+
+${OBJECTDIR}/lib/gpio.o: lib/gpio.c
+	${MKDIR} -p ${OBJECTDIR}/lib
+	${RM} "$@.d"
+	$(COMPILE.c) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/lib/gpio.o lib/gpio.c
 
 ${OBJECTDIR}/lib/i2c.o: lib/i2c.c
 	${MKDIR} -p ${OBJECTDIR}/lib
