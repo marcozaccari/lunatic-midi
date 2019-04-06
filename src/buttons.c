@@ -44,6 +44,7 @@ void buttons_debug() {
 }
 
 bool buttons_do() {
+   #if defined(__arm__)
 	uint8_t buffer[256];
 	int size;
 	uint8_t b;
@@ -70,6 +71,7 @@ bool buttons_do() {
 			}
 		}
 	}
+   #endif
 
 	return true;
 }

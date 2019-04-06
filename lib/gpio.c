@@ -85,7 +85,7 @@ void gpio_set_pin_to_output(int pin) {
    OUT_GPIO(pin);
    
    #else
-   pin = pin;
+   UNUSED(pin);
    #endif
 }
 
@@ -94,7 +94,7 @@ void gpio_set_pin_to_input(int pin) {
    INP_GPIO(pin);
    
    #else
-   pin = pin;
+   UNUSED(pin);
    #endif
 }
 
@@ -106,8 +106,8 @@ void gpio_output(int pin, bool state) {
       GPIO_CLR = 1 << pin;
    
    #else
-   pin = pin;
-   state = state;
+   UNUSED(pin);
+   UNUSED(state);
    #endif
 }
 
@@ -116,7 +116,7 @@ bool gpio_input(int pin) {
    return (bool)(GET_GPIO(pin));
    
    #else
-   pin = pin;
+   UNUSED(pin);
    return false;
    #endif
 }

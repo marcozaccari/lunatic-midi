@@ -13,6 +13,7 @@
 #define LED_CYAN	6
 #define LED_WHITE	7
 
+#define MAX_SEND_BYTES_PER_LOOP 16   // 16*8*2.5 = 320us
 
 bool led_monitor_init();
 bool led_monitor_done();

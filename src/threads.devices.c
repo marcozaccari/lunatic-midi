@@ -18,7 +18,8 @@
 #include "led_monitor.h"
 #include "adc.h"
 
-#define MAX_TASKS 3
+
+#define TIMESLICES_US 500
 
 enum tasks {
    KEYBOARD_TASK,
@@ -69,19 +70,55 @@ bool devices_thread_init() {
    return true;
 }
 
+/** Measure usleep() internal delay
+ * 
+ * @return int
+ */
+int tune_usleep() {
+   struct timespec gettime_now;
+   long int start_time;
+   long int time_diff;
+   int elapsed_us, adjust_us;
+   int tests = 100;
+
+   clock_gettime(CLOCK_REALTIME, &gettime_now);
+   start_time = gettime_now.tv_nsec;
+
+   for (int k=0; k<tests; k++)
+      usleep(1000);
+
+   clock_gettime(CLOCK_REALTIME, &gettime_now);
+   time_diff = gettime_now.tv_nsec - start_time;
+   if (time_diff < 0)
+      time_diff += 1000000000;				//(Rolls over every 1 second)
+      
+
+   elapsed_us = time_diff / 1000;
+
+   adjust_us = (tests*1000 - elapsed_us) / tests;
+
+   dlog(_LOG_DEBUG, "usleep() adjust = %dus", adjust_us);
+	
+   return adjust_us;
+}
+
+
 void* devices_thread() {
 	struct timespec gettime_now;
    long int start_time;
 	long int time_diff;
    int elapsed_us;
+   int remain_us;
+   int adjust_us = tune_usleep();
    
    int cur_task;
    
    for (;;) {
+      gpio_output(DEBUG_LED_GPIO, 1);
+
       clock_gettime(CLOCK_REALTIME, &gettime_now);
       start_time = gettime_now.tv_nsec;
       
-      gpio_output(DEBUG_LED_GPIO, 1);
       
       cur_task++;
       cur_task %= SCHEDULER_TASKS_MAX;
@@ -108,16 +145,18 @@ void* devices_thread() {
       if (should_terminate)
          break;
 
+
       clock_gettime(CLOCK_REALTIME, &gettime_now);
 		time_diff = gettime_now.tv_nsec - start_time;
 		if (time_diff < 0)
 			time_diff += 1000000000;				//(Rolls over every 1 second)
-      
-      gpio_output(DEBUG_LED_GPIO, 0);
-
       elapsed_us = time_diff / 1000;
-      if (elapsed_us < 500)
-         usleep(500 - elapsed_us);
+
+      remain_us = TIMESLICES_US - elapsed_us + adjust_us;
+      if (remain_us > 0) {
+         gpio_output(DEBUG_LED_GPIO, 0);
+         usleep(remain_us);
+      }
    }
 
    buttons_done();

@@ -67,7 +67,7 @@ void handler(int sig_num, siginfo_t* info, void* ucontext) {
 	#elif defined(__x86_64__) // gcc specific
 		caller_address = (void *) uc->uc_mcontext.rip; // RIP: x86_64 specific
 	#elif defined(__arm__)
-      # https://answers.launchpad.net/gcc-arm-embedded/+question/248296
+      // https://answers.launchpad.net/gcc-arm-embedded/+question/248296
 		caller_address = (void *) uc->uc_mcontext.arm_pc; // uc->uc_mcontext.arm_pc
 	#else
 		#error Unsupported architecture.

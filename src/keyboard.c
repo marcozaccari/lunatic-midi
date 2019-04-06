@@ -77,6 +77,7 @@ void keyboard_debug() {
 }
 
 bool keyboard_do() {
+   #if defined(__arm__)
 	uint8_t buffer[256];
 	int size;
 
@@ -95,7 +96,7 @@ bool keyboard_do() {
 			}
 		}
 	}
-
+   #endif
 	return true;
 }
 
@@ -108,18 +109,18 @@ bool keyboard_init() {
 	}
 	//printf("Keyboard opened with handle %u\r\n", i2c_keyboard.file);
 
-	keys_buffer_head = 0;
-	keys_buffer_tail = 0;
-
-	last_key.key = -1;
-
 	// disable velocity on note-off
 	buffer[0] = 0x80;
 	i2c_write(&i2c_keyboard, buffer, 1);
 
 	// default settings
-	keyboard_key_offset = KEYBOARD_DEFAULT_KEY_OFFSET;
+	keys_buffer_head = 0;
+	keys_buffer_tail = 0;
 
+	last_key.key = -1;
+
+	keyboard_key_offset = KEYBOARD_DEFAULT_KEY_OFFSET;
+   
 	return true;
 }
 

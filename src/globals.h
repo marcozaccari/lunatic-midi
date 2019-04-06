@@ -5,6 +5,6 @@
 
 bool should_terminate;
 
-#define DEBUG_LED_GPIO 25
+#define DEBUG_LED_GPIO 25  // Pin 22
 
 #endif

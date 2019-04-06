@@ -46,14 +46,17 @@ bool led_monitor_do() {
 
 	buff_len = 0;
 	for (int x=0; x < LEDS_COUNT; x++) {
-		//if (framebuffer[x] != framebuffer_old[x]) {
+		if (framebuffer[x] != framebuffer_old[x]) {
 			buff[buff_len] = (uint8_t)x | 0x80;
 			buff_len++;
 			buff[buff_len] = framebuffer[x];
 			buff_len++;
 			
 			framebuffer_old[x] = framebuffer[x];
-		//}
+
+			if (buff_len >= MAX_SEND_BYTES_PER_LOOP)
+				break;
+		}
 	}
 
 	if (buff_len) {

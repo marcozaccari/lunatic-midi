@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#define UNUSED(expr) do { (void)(expr); } while (0)
+
 /*#ifndef bool
     #define bool int
     #define true 1
