@@ -20,7 +20,7 @@ typedef struct key_tag {
 
 
 
-bool keyboard_init();
+bool keyboard_init(int i2c_address);
 bool keyboard_done();
 
 void keyboard_debug();

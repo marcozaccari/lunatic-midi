@@ -15,7 +15,7 @@
 
 #define MAX_SEND_BYTES_PER_LOOP 16   // 16*8*2.5 = 320us
 
-bool led_monitor_init();
+bool led_monitor_init(int i2c_address);
 bool led_monitor_done();
 
 bool led_monitor_do();

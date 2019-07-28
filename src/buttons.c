@@ -76,10 +76,10 @@ bool buttons_do() {
 	return true;
 }
 
-bool buttons_init() {
+bool buttons_init(int i2c_address) {
 	uint8_t buffer[10];
 
-	if (!i2c_open(&i2c_buttons, 0x31)) {
+	if (!i2c_open(&i2c_buttons, i2c_address)) {
 		//printf("Cannot open buttons\r\n");
 		return false;
 	}

@@ -43,10 +43,12 @@ bool threads_start() {
 }
 
 void threads_stop() {
-   dlog(_LOG_TERMINAL, "Waiting for threads ending (10 secs timeout)");
+   int timeout_secs = 5;
+
+   dlog(_LOG_TERMINAL, "Waiting for threads ending (%d secs timeout)", timeout_secs);
    bool all_terminated;
    
-   for (int i=0; i<10; i++) {
+   for (int i=0; i<timeout_secs; i++) {
       all_terminated = true;
       for (int k=0; k<THREADS_MAX; k++) {
          if (!threads_terminated[k]) {

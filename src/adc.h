@@ -8,7 +8,7 @@
 unsigned int adc_ribbon_value;
 unsigned int adc_pedal_value[3];
 
-bool adc_init();
+bool adc_init(int i2c_address);
 bool adc_done();
 
 bool adc_do();

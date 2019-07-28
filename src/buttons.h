@@ -3,7 +3,7 @@
 
 #include "../lib/utils.h"
 
-bool buttons_init();
+bool buttons_init(int i2c_address);
 bool buttons_done();
 
 void buttons_debug();

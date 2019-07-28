@@ -100,10 +100,10 @@ bool keyboard_do() {
 	return true;
 }
 
-bool keyboard_init() {
+bool keyboard_init(int i2c_address) {
 	uint8_t buffer[10];
 
-	if (!i2c_open(&i2c_keyboard, 0x30)) {
+	if (!i2c_open(&i2c_keyboard, i2c_address)) {
 		//printf("Cannot open keyboard\r\n");
 		return false;
 	}

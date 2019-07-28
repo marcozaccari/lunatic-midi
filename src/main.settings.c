@@ -9,6 +9,14 @@
 static void set_default_settings() {
 	settings.pid_file[0] = 0;
    settings.ipc_port = 6666;
+   
+   settings.midi_portname[0] = 0;
+   
+   settings.keyboard1_i2c_address = 0;
+   settings.keyboard2_i2c_address = 0;
+   settings.buttons_i2c_address = 0;
+   settings.led_monitor_i2c_address = 0;
+   settings.adc_i2c_address = 0;
 }
 
 static bool load_by_ini(const char* filename, bool should_start){
@@ -21,6 +29,12 @@ static bool load_by_ini(const char* filename, bool should_start){
 		log_to_syslog = zini_readboolean("LOGGING", "SYSLOG", log_to_syslog);
       
 		zini_readstring(settings.midi_portname, "MIDI", "PORT NAME", settings.midi_portname);
+
+      settings.keyboard1_i2c_address = zini_readinteger("I2C", "KEYBOARD1", settings.keyboard1_i2c_address);
+      settings.keyboard2_i2c_address = zini_readinteger("I2C", "KEYBOARD2", settings.keyboard2_i2c_address);
+      settings.buttons_i2c_address = zini_readinteger("I2C", "BUTTONS", settings.buttons_i2c_address);
+      settings.led_monitor_i2c_address = zini_readinteger("I2C", "LED MONITOR", settings.led_monitor_i2c_address);
+      settings.adc_i2c_address = zini_readinteger("I2C", "ADC", settings.adc_i2c_address);
 
 		if (should_start)
 			dlog(_LOG_TERMINAL, "%s settings loaded", filename);

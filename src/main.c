@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <wait.h>
+#include <signal.h>
 
 #include "../lib/utils.h"
 #include "../lib/exceptions.h"
@@ -264,8 +265,10 @@ int main(int argc, char *argv[]){
 	if (cmd_start)
 		show_logo(false);
 	
-	if (debug)
+	if (debug) {
 		printf("- DEBUG mode ON -\r\n");
+      log_min_level = _LOG_DEBUG;
+   }
 	
 	if (terminal_active && !cmd_stop)
 		printf("--- Keyboard: use 'q' for quit, 'l' to change log level\r\n");
