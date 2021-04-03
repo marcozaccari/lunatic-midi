@@ -1,0 +1,6 @@
+*/nbproject/private/
+*/build/default/
+*/dist/default/
+*.cof
+*.err
+*.map
