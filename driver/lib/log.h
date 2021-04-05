@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 #ifndef SYSLOG_PROC_NAME
-    #define SYSLOG_PROC_NAME "controller"
+    #define SYSLOG_PROC_NAME "lunatic-driver"
 #endif
 
 typedef enum {

@@ -4,8 +4,6 @@
 #include <unistd.h>
 
 #include "../lib/log.h"
-#include "../lib/ipc.h"
-#include "../lib/midi.h"
 #include "main.settings.h"
 
 
@@ -20,27 +18,7 @@ void change_log_mode(bool reset) {
    dlog(_LOG_TERMINAL, "Logging level: %s", loglevel_name[log_min_level]);
 }
 
-void log_cb(char* s) {
-   if (ipc_debug_connected())
-      ipc_send_debug(s);
-}
-
-bool ipc_parse_command(char *msg, uint8_t client_id) {
-   if (strcmp(msg, "debug") == 0) {
-      if (ipc_debug_connected())
-         change_log_mode(false);
-      else {
-         ipc_set_debug_client(client_id);
-         change_log_mode(true);
-      }
-
-      ipc_send_debug("Logging level: %s\n", loglevel_name[log_min_level]);
-      return false;
-   }
-   
-   ipc_send(client_id, (char*)msg);
-   return false;
-}
+//void log_cb(char* s) {}
 
 int console_keyboard_char_count = 0;
 void console_keyboard_do() {
@@ -59,12 +37,12 @@ void console_keyboard_do() {
             change_log_mode(console_keyboard_char_count == 0);
             break;
             
-         case '1':
+         /*case '1':
             dlog(_LOG_TERMINAL, "test note 40");
             midi_note_on(40, 0x80);
             sleep(1);
             midi_note_off(40, 0);
-            break;
+            break;*/
             
          /*case '/':
             // simulate crash
@@ -81,27 +59,12 @@ void console_keyboard_do() {
 }
 
 bool console_loop() {
-   int ipc_sleep_secs;
-
-   if (terminal_active)
-      ipc_sleep_secs = 1;
-   else
-      ipc_sleep_secs = 5;
-   
-   if (!ipc_init(ipc_parse_command, settings.ipc_port, ipc_sleep_secs))
-      return false;
-   
-   client_log_callback = log_cb;
+   //client_log_callback = log_cb;
    
    while (!should_terminate) {
       if (terminal_active)
          console_keyboard_do();
-      
-      if (!ipc_do())
-         return false;
    }
-   
-   ipc_done();
    
    return true;
 }

@@ -8,7 +8,7 @@
 #include "main.settings.h"
 #include "threads.h"
 #include "threads.devices.h"
-#include "threads.midi.h"
+#include "threads.api.h"
 
 
 pthread_t threads[THREADS_MAX];
@@ -28,14 +28,14 @@ bool threads_start() {
       return false;
    }
 
-   if (!midi_thread_init())
+   if (!api_thread_init())
       return false;
-   threads_terminated[MIDI_THREAD] = false;
-   err = pthread_create(&threads[MIDI_THREAD], NULL, &midi_thread, NULL);
+   threads_terminated[API_THREAD] = false;
+   err = pthread_create(&threads[API_THREAD], NULL, &api_thread, NULL);
    if (err == 0)
-      dlog(_LOG_TERMINAL, "MIDI thread created");
+      dlog(_LOG_TERMINAL, "API thread created");
    else {
-      dlog(_LOG_ERROR, "Can't create MIDI thread: %s", strerror(err));
+      dlog(_LOG_ERROR, "Can't create API thread: %s", strerror(err));
       return false;
    }
    

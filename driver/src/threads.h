@@ -7,7 +7,7 @@
 #define THREADS_MAX 2
 
 enum threads_names {
-   MIDI_THREAD,
+   API_THREAD,
    DEVICES_THREAD,
 };
 

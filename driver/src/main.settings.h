@@ -11,9 +11,6 @@ char settings_filename[STR_MAXSIZE];
 
 typedef struct settings_tag {
     char pid_file[STR_MAXSIZE];
-    int ipc_port;
-    
-    char midi_portname[STR_MAXSIZE];
     
     int keyboard1_i2c_address;
     int keyboard2_i2c_address;

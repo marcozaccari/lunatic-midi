@@ -4,32 +4,24 @@
 #include <unistd.h>
 
 #include "../lib/log.h"
-#include "../lib/midi.h"
 #include "main.settings.h"
 #include "threads.h"
 #include "globals.h"
 
 
-bool midi_thread_init() {
-   strcpy(midi_portname, settings.midi_portname);
-   
-   if (!midi_init())
-      return false;
-   
+bool api_thread_init() {
    return true;
 }
 
-void* midi_thread() {
+void* api_thread() {
    for (;;) {
-      dlog(_LOG_DEBUG, "MIDI thread fired!");
+      //dlog(_LOG_DEBUG, "API thread fired!");
       sleep(3);
       
       if (should_terminate)
          break;
    }
    
-   midi_done();
-
-   threads_terminated[MIDI_THREAD] = true;
+   threads_terminated[API_THREAD] = true;
    return NULL;
 }

@@ -5,10 +5,19 @@ set (default_flags -Wall; -pthread)
 set (debug_flags -g; -Wextra; -Wno-unused-parameter; -Wno-unused-function)
 set (release_flags )
 
-set (linker_libraries "-lpthread -lrt")
+set (linker_libraries "-lasound -lpthread -lrt")
 
 
 project (${project_name})
+
+# Check for ALSA
+find_path (ALSA_INCLUDE_DIR NAMES alsa/asoundlib.h)
+if (ALSA_INCLUDE_DIR)
+    message ("ALSA: OK")
+else ()
+    message (FATAL_ERROR "ALSA: not found; please install libasound2-dev")
+endif ()
+
 
 add_executable (
     ${project_name}
@@ -17,14 +26,16 @@ add_executable (
     lib/log.c
     lib/utils.c
     lib/i2c.c
+    lib/ipc.cpp
     lib/zini.cpp
+    lib/midi.c
     src/adc.c
     src/buttons.c
     src/keyboard.c
     src/led_monitor.c
     src/threads.c
     src/threads.devices.c
-    src/threads.api.c
+    src/threads.midi.c
     src/console.c
     src/main.settings.c
     src/main.c

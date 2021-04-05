@@ -21,7 +21,7 @@ cmake -DCMAKE_BUILD_TYPE=$MODE ../..
 make
 
 if [ $? -eq 0 ]; then
-    cp --remove-destination midi-controller ../../
+    cp --remove-destination lunatic-driver ../../
     exit $?
 fi
 exit 1
