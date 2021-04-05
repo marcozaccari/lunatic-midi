@@ -20,7 +20,7 @@
 
 
 void show_version(){
-	dlog(_LOG_TERMINAL, "Lunatic Driver v.%s\n", DRIVER_VERSION);
+	dlog(_LOG_TERMINAL, "Lunatic Driver v.%s", DRIVER_VERSION);
 }
 
 void list_args(){
@@ -53,30 +53,18 @@ void signal_handler(int signo) {
 	}
 }
 
-void start_driver(bool debug){
+bool start_driver(bool debug) {
 	if (terminal_active)
 		set_terminal_non_canonical();  // need to re-set on crash too
 	
 	log_post_init();
 	
-	dlog(_LOG_NOTICE, "[MAIN] Starting Driver v.%s ...", DRIVER_VERSION);
-	
-	char pid_s[16];
-
 	if (!gpio_init())
-		exit(EXIT_FAILURE);
+		return false;
 		
 	gpio_set_pin_to_output(DEBUG_LED_GPIO);
 
-	int pid_file = open(settings.pid_file, O_CREAT | O_RDWR, 0666);
-	int rc = flock(pid_file, LOCK_EX | LOCK_NB);
-	if (rc){
-		if (EWOULDBLOCK == errno)
-			exit(EXIT_FAILURE);
-	}
-
-	sprintf(pid_s, "%ld\n", (long)getpid());
-	write(pid_file, pid_s, strlen(pid_s) + 1);
+	dlog(_LOG_NOTICE, "[MAIN] Starting Driver...");
 	
 	should_terminate = false;
 	
@@ -86,11 +74,11 @@ void start_driver(bool debug){
 	
 	if (!threads_start()) {
 		threads_stop();
-		exit(EXIT_FAILURE);
+		return false;
 	}
 
 	if (!console_loop())  // main loop
-		exit(EXIT_FAILURE);
+		return false;
 	
 	dlog(_LOG_NOTICE, "[MAIN] Terminating...");
 
@@ -98,10 +86,7 @@ void start_driver(bool debug){
 
 	log_done();
 
-	close(pid_file);
-	unlink(settings.pid_file);
-
-	exit(EXIT_SUCCESS);
+	return true;
 }
 
 void parse_params(int argc, char *argv[], bool* debug) {
@@ -133,9 +118,7 @@ void parse_params(int argc, char *argv[], bool* debug) {
 	}
 }
 
-int main(int argc, char *argv[]){
-	bool cmd_start = true;
-	bool cmd_stop = false;
+int main(int argc, char *argv[]) {
 	bool debug = false;
 	
 	//This will force malloc to use mmap instead of sbrk(which cause fragmented memory that can't be returned to OS also if freed)
@@ -156,17 +139,16 @@ int main(int argc, char *argv[]){
 		log_min_level = _LOG_DEBUG;
 	}
 	
-	if (terminal_active && !cmd_stop)
+	if (terminal_active)
 		printf("--- Keyboard: use 'q' for quit, 'l' to change log level\r\n");
 	
-	if (!load_ini_settings(cmd_start)){
-		return 2;
-	}
-	
+	if (!load_ini_settings())
+		return EXIT_FAILURE;
+
 	int pid_file = open(settings.pid_file, O_CREAT | O_RDWR, 0666);
 	if (!pid_file){
 		dlog(_LOG_ERROR, "PID file '%s' error: %s", settings.pid_file, strerror(errno));
-		exit(1);
+		return EXIT_FAILURE;
 	}
 
 	int rc = flock(pid_file, LOCK_EX | LOCK_NB);
@@ -176,18 +158,24 @@ int main(int argc, char *argv[]){
 			list_args();
 			printf("\n");
 			dlog(_LOG_TERMINAL, "Lunatic-driver already started");
-			exit(1);
-		} else {
+		} else
 			dlog(_LOG_ERROR, "PID lock '%s' error: %s", settings.pid_file, strerror(errno));
-		}
-	} else {
-		// this is the first instance
-		close(pid_file);
-		unlink(settings.pid_file);
 
-		start_driver(debug);
-		exit(EXIT_SUCCESS);
+		return EXIT_FAILURE;
 	}
+
+	// this is the first instance
+	char pid_s[16];
+	sprintf(pid_s, "%ld\n", (long)getpid());
+	write(pid_file, pid_s, strlen(pid_s) + 1);
+
+	bool res = start_driver(debug);
+
+	close(pid_file);
+	unlink(settings.pid_file);
+
+	if (!res)
+		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;
 }

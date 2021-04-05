@@ -25,7 +25,7 @@ settings_t settings;
 extern "C" {
 #endif
 
-extern bool load_ini_settings(bool should_start);
+extern bool load_ini_settings();
 
 #ifdef __cplusplus
 }

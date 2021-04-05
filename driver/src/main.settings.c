@@ -16,7 +16,7 @@ static void set_default_settings() {
 	settings.adc_i2c_address = 0;
 }
 
-static bool load_by_ini(const char* filename, bool should_start){
+static bool load_by_ini(const char* filename) {
 	if (zini_init(filename)){
 		zini_readstring(settings.pid_file, "MAIN", "PID FILE", settings.pid_file);
 		
@@ -30,28 +30,24 @@ static bool load_by_ini(const char* filename, bool should_start){
 		settings.led_monitor_i2c_address = zini_readinteger("I2C", "LED MONITOR", settings.led_monitor_i2c_address);
 		settings.adc_i2c_address = zini_readinteger("I2C", "ADC", settings.adc_i2c_address);
 
-		if (should_start)
-			dlog(_LOG_TERMINAL, "%s settings loaded", filename);
+		dlog(_LOG_TERMINAL, "%s settings loaded", filename);
 		
 	}else{
-		if (should_start)
-			dlog(_LOG_TERMINAL, "%s file NOT found", filename);
+		dlog(_LOG_TERMINAL, "%s file NOT found", filename);
 		return false;
 	}
 	
 	return true;
 }
 
-bool load_ini_settings(bool should_start) {
+bool load_ini_settings() {
 
 	set_default_settings();
 
-	if (!load_by_ini("lunatic-driver.default.ini", should_start))
+	if (!load_by_ini("lunatic-driver.default.ini"))
 		return false;
 
-	load_by_ini(settings_filename, should_start);
-
-	if (!should_start) return true;
+	load_by_ini(settings_filename);
 
 	return true;
 }
