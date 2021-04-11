@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 #include "libs/log.h"
 
@@ -91,6 +92,16 @@ bool scheduler_init_tasks() {
 		tasks[tasks_count] = device;
 		tasks_count++;
 	}
+
+	char tasks_s[STR_MAXSIZE];
+	for (int i=0; i<tasks_count; i++) {
+		device_t *device = tasks[i];
+
+		strcat(tasks_s, device->name);
+		if (i < tasks_count -1)
+			strcat(tasks_s, ", ");
+	}
+	dlog(_LOG_NOTICE, "Scheduler tasks: %s", tasks_s); 
 
 	scheduler_terminated = false;
 
