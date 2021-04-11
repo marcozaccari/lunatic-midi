@@ -2,6 +2,7 @@
 #define _UTILS_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #define UNUSED(expr) do { (void)(expr); } while (0)
 
@@ -44,5 +45,9 @@ void set_terminal_non_canonical();
 bool kbhit();
 
 void get_selfpath(char* path);
+
+// Stores the trimmed input string into the given output buffer, which must be
+// large enough to store the result.
+size_t string_trim(char *out, const char *str);
 
 #endif

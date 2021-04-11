@@ -4,66 +4,72 @@
 #include <unistd.h>
 #include <pthread.h>
 
-#include "../lib/log.h"
-#include "main.settings.h"
+#include "libs/log.h"
 #include "threads.h"
-#include "threads.devices.h"
-#include "threads.api.h"
+#include "scheduler.h"
+#include "api.h"
 
 
-pthread_t threads[THREADS_MAX];
+pthread_t thread_scheduler;
+pthread_t thread_api;
+
+volatile bool threads_terminate_request = false;
 
 
 bool threads_start() {
-   int err;
+	int err;
 
-   if (!devices_thread_init())
-      return false;
-   threads_terminated[DEVICES_THREAD] = false;
-   err = pthread_create(&threads[DEVICES_THREAD], NULL, &devices_thread, NULL);
-   if (err == 0)
-      dlog(_LOG_TERMINAL, "Devices thread created");
-   else {
-      dlog(_LOG_ERROR, "Can't create devices thread: %s", strerror(err));
-      return false;
-   }
+	if (!scheduler_init_tasks())
+		return false;
 
-   if (!api_thread_init())
-      return false;
-   threads_terminated[API_THREAD] = false;
-   err = pthread_create(&threads[API_THREAD], NULL, &api_thread, NULL);
-   if (err == 0)
-      dlog(_LOG_TERMINAL, "API thread created");
-   else {
-      dlog(_LOG_ERROR, "Can't create API thread: %s", strerror(err));
-      return false;
-   }
-   
-   return true;
+	err = pthread_create(&thread_scheduler, NULL, &scheduler_thread_start, NULL);
+	if (err == 0)
+		dlog(_LOG_TERMINAL, "Devices thread created");
+	else {
+		dlog(_LOG_ERROR, "Can't create devices thread: %s", strerror(err));
+		return false;
+	}
+
+	if (!api_init())
+		return false;
+		
+	err = pthread_create(&thread_api, NULL, &api_thread_start, NULL);
+	if (err == 0)
+		dlog(_LOG_TERMINAL, "API thread created");
+	else {
+		dlog(_LOG_ERROR, "Can't create API thread: %s", strerror(err));
+		return false;
+	}
+	
+	return true;
+}
+
+void threads_request_stop() {
+	scheduler_thread_stop();
+	api_thread_stop();
+
+	threads_terminate_request = true;
 }
 
 void threads_stop() {
-   int timeout_secs = 5;
+	int timeout_secs = 5;
 
-   dlog(_LOG_TERMINAL, "Waiting for threads ending (%d secs timeout)", timeout_secs);
-   bool all_terminated;
-   
-   for (int i=0; i<timeout_secs; i++) {
-      all_terminated = true;
-      for (int k=0; k<THREADS_MAX; k++) {
-         if (!threads_terminated[k]) {
-            all_terminated = false;
-            break;
-         }
-      }
-      if (all_terminated)
-         break;
-         
-      sleep(1);
-   }
-   
-   if (all_terminated)
-      dlog(_LOG_INFO, "All threads terminated");
-   else
-      dlog(_LOG_WARNING, "Reached threads timeout: forcing ending");
+	dlog(_LOG_TERMINAL, "Waiting for threads ending (%d secs timeout)", timeout_secs);
+	bool all_terminated = false;
+
+	threads_request_stop();
+	
+	for (int i=0; i<timeout_secs; i++) {
+		if (scheduler_terminated && api_thread_terminated) {
+			all_terminated = true;
+			break;
+		}
+
+		sleep(1);
+	}
+	
+	if (all_terminated)
+		dlog(_LOG_INFO, "All threads terminated");
+	else
+		dlog(_LOG_WARNING, "Reached threads timeout: forcing ending");
 }

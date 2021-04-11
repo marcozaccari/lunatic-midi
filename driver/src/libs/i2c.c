@@ -63,6 +63,7 @@ bool i2c_read(i2c_t *i2c, uint8_t *buffer, int num_bytes) {
    UNUSED(i2c);
    UNUSED(buffer);
    UNUSED(num_bytes);
+
    return true;
    #endif
 }
@@ -82,6 +83,7 @@ bool i2c_write(i2c_t *i2c, uint8_t *buffer, int num_bytes) {
    UNUSED(i2c);
    UNUSED(buffer);
    UNUSED(num_bytes);
+
    return true;
    #endif
 }

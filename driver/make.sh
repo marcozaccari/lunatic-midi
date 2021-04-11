@@ -1,5 +1,7 @@
 #!/bin/bash
 
+clear
+
 MODE="$1"
 if [ ! -n "$MODE" ]; then
     MODE="release"
@@ -24,4 +26,6 @@ if [ $? -eq 0 ]; then
     cp --remove-destination lunatic-driver ../../
     exit $?
 fi
+
+rm ../../lunatic-driver 2> /dev/null
 exit 1

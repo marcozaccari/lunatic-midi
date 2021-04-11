@@ -8,16 +8,17 @@
 #include <wait.h>
 #include <signal.h>
 
-#include "../lib/utils.h"
-#include "../lib/exceptions.h"
-#include "../lib/log.h"
-#include "../lib/gpio.h"
+#include "libs/utils.h"
+#include "libs/exceptions.h"
+#include "libs/log.h"
+#include "libs/gpio.h"
 
-#include "globals.h"
-#include "main.settings.h"
+#include "settings.h"
+#include "debug.h"
 #include "console.h"
 #include "threads.h"
 
+#define DRIVER_VERSION "0.7"
 
 void show_version(){
 	dlog(_LOG_TERMINAL, "Lunatic Driver v.%s", DRIVER_VERSION);
@@ -37,36 +38,24 @@ void signal_handler(int signo) {
 	switch (signo) {
 		case SIGTERM:
 			dlog(_LOG_WARNING, "Received SIGTERM");
-			should_terminate = true;
+			threads_request_stop();
 			break;
 			
 		case SIGINT:
 			//signal(SIGINT, signal_handler);
 			dlog(_LOG_WARNING, "Received SIGINT");
-			should_terminate = true;
+			threads_request_stop();
 			break;
 
 		case SIGQUIT:
 			dlog(_LOG_WARNING, "Received SIGQUIT");
-			should_terminate = true;
+			threads_request_stop();
 			break;
 	}
 }
 
 bool start_driver(bool debug) {
-	if (terminal_active)
-		set_terminal_non_canonical();  // need to re-set on crash too
-	
-	log_post_init();
-	
-	if (!gpio_init())
-		return false;
-		
-	gpio_set_pin_to_output(DEBUG_LED_GPIO);
-
 	dlog(_LOG_NOTICE, "[MAIN] Starting Driver...");
-	
-	should_terminate = false;
 	
 	signal(SIGTERM, signal_handler);
 	signal(SIGQUIT, signal_handler);
@@ -77,17 +66,18 @@ bool start_driver(bool debug) {
 		return false;
 	}
 
-	if (!console_loop())  // main loop
-		return false;
+	// Main loop
+	while (!threads_terminate_request)
+		console_work();
 	
 	dlog(_LOG_NOTICE, "[MAIN] Terminating...");
 
 	threads_stop();
 
-	log_done();
-
 	return true;
 }
+
+char config_filename[STR_MAXSIZE];
 
 void parse_params(int argc, char *argv[], bool* debug) {
 	int k;
@@ -113,14 +103,14 @@ void parse_params(int argc, char *argv[], bool* debug) {
 
 		} else	if (strncmp(argv[k], "--config=", 9) == 0) {
 			char_ptr = argv[k];
-			strcpy(settings_filename, &char_ptr[9]);
+			strcpy(config_filename, &char_ptr[9]);
 		}
 	}
 }
 
 int main(int argc, char *argv[]) {
 	bool debug = false;
-	
+
 	//This will force malloc to use mmap instead of sbrk(which cause fragmented memory that can't be returned to OS also if freed)
 	//if size is over the specified threshold (4096 = the minimum page size=memory wasted in case of mmap)
 	//mallopt(M_MMAP_THRESHOLD, 4096);
@@ -129,7 +119,7 @@ int main(int argc, char *argv[]) {
 	 
 	log_init();
 	
-	strcpy(settings_filename, "lunatic-driver.ini");
+	strcpy(config_filename, "lunatic-driver.ini");
 	parse_params(argc, argv, &debug);
 
 	show_version();
@@ -142,7 +132,7 @@ int main(int argc, char *argv[]) {
 	if (terminal_active)
 		printf("--- Keyboard: use 'q' for quit, 'l' to change log level\r\n");
 	
-	if (!load_ini_settings())
+	if (!load_ini_settings(config_filename))
 		return EXIT_FAILURE;
 
 	int pid_file = open(settings.pid_file, O_CREAT | O_RDWR, 0666);
@@ -169,7 +159,19 @@ int main(int argc, char *argv[]) {
 	sprintf(pid_s, "%ld\n", (long)getpid());
 	write(pid_file, pid_s, strlen(pid_s) + 1);
 
+	if (terminal_active)
+		set_terminal_non_canonical();  // need to re-set on crash too
+	
+	log_post_init();
+	
+	if (!gpio_init())
+		return EXIT_FAILURE;
+
+	debug_init();
+
 	bool res = start_driver(debug);
+
+	log_done();
 
 	close(pid_file);
 	unlink(settings.pid_file);

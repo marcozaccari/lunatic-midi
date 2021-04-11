@@ -19,6 +19,11 @@
         "cerrno": "c",
         "time.h": "c",
         "inttypes.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "analog.h": "c",
+        "device.h": "c",
+        "*.tcc": "c",
+        "devices.h": "c",
+        "i2c.h": "c"
     }
 }

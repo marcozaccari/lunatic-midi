@@ -1,1 +1,2 @@
 ./make.sh release
+exit $?

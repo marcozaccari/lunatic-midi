@@ -1,6 +1,7 @@
 ./make.sh debug
 
-exit 0
+exit $?
+
 if [ $? -eq 0 ]; then
     ./lunatic-driver debug
 fi

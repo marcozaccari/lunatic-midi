@@ -3,6 +3,10 @@
 
 #include "utils.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+
 typedef struct i2c_tag {
 	int file;
 	int address;
