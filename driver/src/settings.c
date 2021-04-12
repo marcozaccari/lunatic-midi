@@ -15,6 +15,9 @@
 #include "settings.h"
 
 
+settings_t settings;
+
+
 static void set_default_settings() {
 	settings.pid_file[0] = 0;
 }

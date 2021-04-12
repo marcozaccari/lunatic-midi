@@ -12,7 +12,7 @@
 #include "utils.h"
 
 
-struct termios old_termios;
+static struct termios old_termios;
 
 void reset_terminal_mode() {
 	 tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);

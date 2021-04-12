@@ -6,7 +6,7 @@
 #include "libs/log.h"
 #include "api.h"
 
-volatile bool terminate_request;
+static volatile bool terminate_request;
 volatile bool api_thread_terminated = true;
 
 static inline void work();

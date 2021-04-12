@@ -1,5 +1,5 @@
-#ifndef _LOG_H
-#define _LOG_H
+#ifndef __LOG_H
+#define __LOG_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,20 +21,20 @@ typedef enum {
 
 #define LOGLEVEL_MAX  6
 
-char log_filename[256];
-bool log_to_syslog;
-loglevel_t log_min_level;  // default _LOG_NOTICE
+extern char log_filename[256];
+extern bool log_to_syslog;
+extern loglevel_t log_min_level;  // default _LOG_NOTICE
 
 typedef void log_callback(char*);
-log_callback *client_log_callback;
+extern log_callback *client_log_callback;
 
-bool terminal_active;    // if running in console (no service) or by 'debug' parameter
-bool master_process;
+extern bool terminal_active;    // if running in console (no service) or by 'debug' parameter
+extern bool master_process;
 
 extern const char loglevel_name[LOGLEVEL_MAX][30];
 extern const char loglevel_color[LOGLEVEL_MAX][10];
 
-loglevel_t log_debug_min_level;
+extern loglevel_t log_debug_min_level;
 
 void dlog(loglevel_t level, const char *fmt, ...);
 void v_dlog(loglevel_t level, const char *fmt, va_list args);

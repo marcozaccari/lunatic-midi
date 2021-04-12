@@ -87,4 +87,3 @@ bool i2c_write(i2c_t *i2c, uint8_t *buffer, int num_bytes) {
    return true;
    #endif
 }
-

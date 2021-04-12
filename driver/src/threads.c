@@ -10,8 +10,8 @@
 #include "api.h"
 
 
-pthread_t thread_scheduler;
-pthread_t thread_api;
+static pthread_t thread_scheduler;
+static pthread_t thread_api;
 
 volatile bool threads_terminate_request = false;
 

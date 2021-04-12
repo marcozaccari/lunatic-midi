@@ -7,7 +7,7 @@
 #include "threads.h"
 
 
-void change_log_mode(bool reset) {
+static void change_log_mode(bool reset) {
 	if (reset) 
 		log_min_level = _LOG_DEBUG;
 	else {
@@ -20,8 +20,9 @@ void change_log_mode(bool reset) {
 
 //void log_cb(char* s) {}
 
-int console_keyboard_char_count = 0;
-void console_keyboard_do() {
+static int console_keyboard_char_count = 0;
+
+static void console_keyboard_do() {
 	unsigned char c;
 	//int *test_crash;
 	

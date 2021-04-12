@@ -18,7 +18,7 @@
 // Time window for every task
 #define TIMESLICES_US 500
 
-enum tasks {
+/*enum tasks {
 	KEYBOARD_TASK,
 	BUTTONS_TASK,  // 7ms antibounce
 	ADC_TASK,
@@ -26,7 +26,7 @@ enum tasks {
 };
 
 #define SCHEDULER_TASKS_MAX 7
-int tasks_scheduler[SCHEDULER_TASKS_MAX] = {
+static int tasks_scheduler[SCHEDULER_TASKS_MAX] = {
 	ADC_TASK,
 	KEYBOARD_TASK,
 	ADC_TASK,
@@ -34,20 +34,21 @@ int tasks_scheduler[SCHEDULER_TASKS_MAX] = {
 	ADC_TASK,
 	BUTTONS_TASK,
 	LED_MONITOR_TASK,
-};
+};*/
 
 #define MAX_TASKS 64
-device_t *tasks[MAX_TASKS];
-int tasks_count = 0;
-int tasks_cur = 0;
+static device_t *tasks[MAX_TASKS];
+static int tasks_count = 0;
+static int tasks_cur = 0;
 
-volatile bool terminate_request;
+static volatile bool terminate_request;
 volatile bool scheduler_terminated = true;
 
-int usleep_latency;
+static int usleep_latency;
 
 static int calc_usleep_latency();
 static inline void work();
+static void print_tasks_list();
 
 
 bool scheduler_init_tasks() {
@@ -93,7 +94,17 @@ bool scheduler_init_tasks() {
 		tasks_count++;
 	}
 
+	print_tasks_list();
+
+	scheduler_terminated = false;
+
+	return true; 
+}
+
+static void print_tasks_list() {
 	char tasks_s[STR_MAXSIZE];
+	tasks_s[0] = 0;
+
 	for (int i=0; i<tasks_count; i++) {
 		device_t *device = tasks[i];
 
@@ -101,11 +112,8 @@ bool scheduler_init_tasks() {
 		if (i < tasks_count -1)
 			strcat(tasks_s, ", ");
 	}
+
 	dlog(_LOG_NOTICE, "Scheduler tasks: %s", tasks_s); 
-
-	scheduler_terminated = false;
-
-	return true; 
 }
 
 void scheduler_done_tasks() {

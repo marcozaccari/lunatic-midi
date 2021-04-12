@@ -4,8 +4,8 @@
 
 #define MAX_DEVICES 32
 
-device_t *devices[MAX_DEVICES];
-int devices_count = 0;
+static device_t *devices[MAX_DEVICES];
+static int devices_count = 0;
 
 static void add_device(void *device) {
     devices[devices_count] = device;

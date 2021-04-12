@@ -22,7 +22,21 @@
 #define KCOL_CYAN  "\x1B[36m"
 #define KCOL_WHITE  "\x1B[97m"	
 
-FILE* info_log;
+
+// Public
+char log_filename[256];
+bool log_to_syslog;
+loglevel_t log_min_level;  // default _LOG_NOTICE
+
+log_callback *client_log_callback;
+
+bool terminal_active;    // if running in console (no service) or by 'debug' parameter
+bool master_process;
+
+loglevel_t log_debug_min_level;
+
+// Private
+static FILE* info_log;
 
 static bool initialized = false;
 static ino_t inode = 0;

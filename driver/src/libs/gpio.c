@@ -23,11 +23,12 @@
 #define PAGE_SIZE (4*1024)
 #define BLOCK_SIZE (4*1024)
 
-int  mem_fd;
-void *gpio_map;
+#if defined(__arm__)
+static int  mem_fd;
+static void *gpio_map;
 
 // I/O access
-volatile unsigned *gpio;
+static volatile unsigned *gpio;
 
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) or SET_GPIO_ALT(x,y)
@@ -42,6 +43,7 @@ volatile unsigned *gpio;
 
 #define GPIO_PULL *(gpio+37) // Pull up/pull down
 #define GPIO_PULLCLK0 *(gpio+38) // Pull up/pull down clock
+#endif
 
 
 /** Set up a memory regions to access GPIO
