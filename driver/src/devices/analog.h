@@ -3,19 +3,31 @@
 
 #include "devices.h"
 
-#define STATES_MAX 3
-enum states {
-	READ_CHAN0 = 0,
-	READ_CHAN1 = 1,
-	READ_CHAN2 = 2,
-	READ_CHAN3 = 3
-};
+#define ANALOG_CHANNELS 4
+
+typedef enum {
+	ANALOG_CHANNEL_SLIDER = 0,
+	ANALOG_CHANNEL_RIBBON = 1
+} analog_channel_type_t;
+
+#define ANALOG_BUFFER_SIZE 256
+
+typedef struct analog_value_tag {
+	int channel;
+	int value;
+} analog_value_t;
+
 
 typedef struct analog_tag {
 	device_t *base;
 
-	unsigned int ribbon_value;
-	unsigned int slider_value[3];
+	analog_channel_type_t channels_type[ANALOG_CHANNELS];
+
+	analog_value_t analog_buffer[ANALOG_BUFFER_SIZE];
+	int analog_buffer_head;
+	int analog_buffer_tail;
+
+	unsigned int last_values[ANALOG_CHANNELS];
 
 	bool continous_sampling;
 	

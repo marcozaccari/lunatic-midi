@@ -92,6 +92,14 @@ typedef enum {
 	COMP_QUEUE_OFF = 3   // Disable comparator (ALERT/RDY on high impedance)
 } config_comparator_queue_t;
 
+#define STATES_MAX 3
+enum states {
+	READ_CHAN0 = 0,
+	READ_CHAN1 = 1,
+	READ_CHAN2 = 2,
+	READ_CHAN3 = 3
+};
+
 
 static void write_config(analog_t *self,
 	config_channel_t channel, 
@@ -238,6 +246,10 @@ static bool init(analog_t *self) {
 	self->continous_sampling = false;
 	self->state_machine = 0;
 
+	for (int i=0; i<ANALOG_CHANNELS; i++) {
+		self->last_values[i] = 0;
+	}
+
 	return true;
 }
 
@@ -246,23 +258,36 @@ static bool done(analog_t *self) {
 }
 
 static bool work(analog_t *self) {
+	analog_value_t analog_value;
+
+	analog_value.channel = self->state_machine;
+
 	switch (self->state_machine) {
 		case READ_CHAN0:
+			analog_value.value = 0;
 			break;
 
 		case READ_CHAN1:
+			analog_value.value = 0;
 			break;
 			
 		case READ_CHAN2:
+			analog_value.value = 0;
 			break;
 			
 		case READ_CHAN3:
+			analog_value.value = 0;
 			break;
 	}
 	
 	self->state_machine++;
 	self->state_machine %= STATES_MAX;
-	
+
+	if (self->last_values[analog_value.channel] != analog_value.value) {
+		self->analog_buffer[self->analog_buffer_head] = analog_value;
+		self->analog_buffer_head++;
+	}
+
 	return true;
 }
 
