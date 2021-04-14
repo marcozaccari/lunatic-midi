@@ -7,10 +7,10 @@
 #include "libs/ini.h"
 #include "libs/log.h"
 
-#include "devices/keyboard.h"
-#include "devices/buttons.h"
-#include "devices/analog.h"
-#include "devices/ledstrip.h"
+#include "devices/modules/keyboard.h"
+#include "devices/modules/buttons.h"
+#include "devices/modules/analog.h"
+#include "devices/modules/ledstrip.h"
 
 #include "settings.h"
 
@@ -61,6 +61,45 @@ static bool get_boolean(ini_t *cfg, const char *section, const char *key, bool *
 	return true;
 }
 
+static void load_device_keyboard(ini_t *cfg, const char *section, 
+	const char *device_name, int i2c_address, int *keyboard_offset) {
+
+	if (!get_integer(cfg, section, "offset", false, keyboard_offset))
+		*keyboard_offset += 128;
+
+	dlog(_LOG_TERMINAL, "Keyboard offset: %d", *keyboard_offset);
+
+	new_device_keyboard(device_name, i2c_address, *keyboard_offset);
+}
+
+static void load_device_analog(ini_t *cfg, const char *section, 
+	const char *device_name, int i2c_address) {
+
+	analog_t* analog = new_device_analog(device_name, i2c_address);
+
+	char chan_type_s[STR_MAXSIZE];
+	char type_pname[STR_MAXSIZE];
+	analog_channel_type_t chan_type;
+
+	for (int channel=0; channel<ANALOG_CHANNELS; channel++) {
+		sprintf(type_pname, "channel_%d", channel);
+
+		chan_type = ANALOG_CHANNEL_SLIDER;
+
+		if (get_string(cfg, section, type_pname, chan_type_s)) {
+			if (strcmp(chan_type_s, "slider") == 0)
+				chan_type = ANALOG_CHANNEL_SLIDER;
+			else if (strcmp(chan_type_s, "ribbon") == 0)
+				chan_type = ANALOG_CHANNEL_RIBBON;
+			else 
+				dlog(_LOG_WARNING, "Invalid channel type: \"%s\"", chan_type_s);
+		}
+
+		analog->set_channel_type(analog, channel, chan_type);
+		dlog(_LOG_WARNING, "Channel %d = \"%s\" (%d)", channel, chan_type_s, chan_type);
+	}
+}
+
 static bool load_device(ini_t *cfg, char *device_name) {
 	static int keyboard_offset = 0;
 
@@ -86,18 +125,13 @@ static bool load_device(ini_t *cfg, char *device_name) {
 	}
 
 	if (strcmp(type, "keyboard") == 0) {
-		if (!get_integer(cfg, section, "offset", false, &keyboard_offset))
-			keyboard_offset += 128;
-
-		dlog(_LOG_TERMINAL, "Keyboard offset: %d", keyboard_offset);
-
-		new_device_keyboard(device_name, i2c_address, keyboard_offset);
+		load_device_keyboard(cfg, section, device_name, i2c_address, &keyboard_offset);
 	
 	} else if (strcmp(type, "buttons") == 0) {
 		new_device_buttons(device_name, i2c_address);
 
 	} else if (strcmp(type, "analog") == 0) {
-		new_device_analog(device_name, i2c_address);
+		load_device_analog(cfg, section, device_name, i2c_address);
 
 	} else if (strcmp(type, "led strip") == 0) {
 		new_device_ledstrip(device_name, i2c_address);

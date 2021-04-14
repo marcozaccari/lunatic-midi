@@ -7,13 +7,19 @@
 #include "libs/log.h"
 
 #include "debug.h"
-#include "scheduler.h"
+#include "events.h"
+#include "worker.h"
 
-#include "devices/devices.h"
-#include "devices/keyboard.h"
-#include "devices/buttons.h"
-#include "devices/analog.h"
-#include "devices/ledstrip.h"
+#include "devices.h"
+#include "modules/keyboard.h"
+#include "modules/buttons.h"
+#include "modules/analog.h"
+#include "modules/ledstrip.h"
+
+// Fix for vscode strange circumstances :/
+#ifndef CLOCK_REALTIME
+	#define CLOCK_REALTIME 0
+#endif
 
 // Time window for every task
 #define TIMESLICES_US 500
@@ -165,7 +171,6 @@ static inline void work() {
 	long int time_diff;
 	int elapsed_us;
 	int remain_us;
-	int usleep_latency = calc_usleep_latency();
 	
 	debug_led_on();
 
@@ -179,14 +184,26 @@ static inline void work() {
 	switch (device->type) {
 		case DEVICE_KEYBOARD:
 			((keyboard_t*)device->obj)->work(device->obj);
+
+			keyboard_event_t *events;
+			int count = ((keyboard_t*)device->obj)->get_events(device->obj, events);
+			enqueue_buttons_events(events, count);
 			break;
 
 		case DEVICE_BUTTONS:
 			((buttons_t*)device->obj)->work(device->obj);
+
+			button_event_t *events;
+			int count = ((buttons_t*)device->obj)->get_events(device->obj, events);
+			enqueue_buttons_events(events, count);
 			break;
 
 		case DEVICE_ANALOG:
 			((analog_t*)device->obj)->work(device->obj);
+			
+			analog_event_t *events;
+			int count = ((analog_t*)device->obj)->get_events(device->obj, events);
+			enqueue_analog_events(events, count);
 			break;
 
 		case DEVICE_LEDSTRIP:

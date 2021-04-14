@@ -6,7 +6,7 @@
 
 #include "libs/log.h"
 #include "threads.h"
-#include "scheduler.h"
+#include "devices/worker.h"
 #include "api.h"
 
 
@@ -19,10 +19,10 @@ volatile bool threads_terminate_request = false;
 bool threads_start() {
 	int err;
 
-	if (!scheduler_init_tasks())
+	if (!worker_init())
 		return false;
 
-	err = pthread_create(&thread_scheduler, NULL, &scheduler_thread_start, NULL);
+	err = pthread_create(&thread_scheduler, NULL, &worker_thread, NULL);
 	if (err == 0)
 		dlog(_LOG_TERMINAL, "Devices thread created");
 	else {
@@ -45,7 +45,7 @@ bool threads_start() {
 }
 
 void threads_request_stop() {
-	scheduler_thread_stop();
+	worker_thread_stop();
 	api_thread_stop();
 
 	threads_terminate_request = true;
@@ -60,7 +60,7 @@ void threads_stop() {
 	threads_request_stop();
 	
 	for (int i=0; i<timeout_secs; i++) {
-		if (scheduler_terminated && api_thread_terminated) {
+		if (worker_terminated && api_thread_terminated) {
 			all_terminated = true;
 			break;
 		}

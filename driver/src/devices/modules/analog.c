@@ -12,8 +12,8 @@
 #include <termios.h>
 #include <sys/select.h>
 
-#include "../libs/utils.h"
-#include "../libs/i2c.h"
+#include "../../libs/utils.h"
+#include "../../libs/i2c.h"
 
 #include "analog.h"
 
@@ -91,14 +91,6 @@ typedef enum {
 	COMP_QUEUE_4   = 2,  // Assert after four conversion
 	COMP_QUEUE_OFF = 3   // Disable comparator (ALERT/RDY on high impedance)
 } config_comparator_queue_t;
-
-#define STATES_MAX 3
-enum states {
-	READ_CHAN0 = 0,
-	READ_CHAN1 = 1,
-	READ_CHAN2 = 2,
-	READ_CHAN3 = 3
-};
 
 
 static void write_config(analog_t *self,
@@ -244,7 +236,6 @@ static bool init(analog_t *self) {
 	}
 
 	self->continous_sampling = false;
-	self->state_machine = 0;
 
 	for (int i=0; i<ANALOG_CHANNELS; i++) {
 		self->last_values[i] = 0;
@@ -257,38 +248,33 @@ static bool done(analog_t *self) {
 	return i2c_close(&self->base->i2c);
 }
 
+static void set_channel_type(analog_t *self, int channel, analog_channel_type_t type) {
+	self->channels_type[channel] = type;
+}
+
 static bool work(analog_t *self) {
-	analog_value_t analog_value;
+	analog_event_t analog_value;
 
-	analog_value.channel = self->state_machine;
+	self->events_count = 0;
 
-	switch (self->state_machine) {
-		case READ_CHAN0:
-			analog_value.value = 0;
-			break;
+	for (int channel=0; channel<ANALOG_CHANNELS; channel++) {
+		analog_value.channel = channel;
 
-		case READ_CHAN1:
-			analog_value.value = 0;
-			break;
-			
-		case READ_CHAN2:
-			analog_value.value = 0;
-			break;
-			
-		case READ_CHAN3:
-			analog_value.value = 0;
-			break;
-	}
+		// TODO
+		analog_value.value = 0;
 	
-	self->state_machine++;
-	self->state_machine %= STATES_MAX;
-
-	if (self->last_values[analog_value.channel] != analog_value.value) {
-		self->analog_buffer[self->analog_buffer_head] = analog_value;
-		self->analog_buffer_head++;
+		if (self->last_values[analog_value.channel] != analog_value.value) {
+			self->events[self->events_count] = analog_value;
+			self->events_count++;
+		}
 	}
 
 	return true;
+}
+
+static int get_events(analog_t *self, analog_event_t *events) {
+	events = self->events;
+	return self->events_count;
 }
 
 analog_t* new_device_analog(char *name, int i2c_address) {
@@ -297,8 +283,12 @@ analog_t* new_device_analog(char *name, int i2c_address) {
 	analog->base = new_device(i2c_address, name, DEVICE_ANALOG, analog);
 
 	analog->init = &init;
-	analog->work = &work;
 	analog->done = &done;
+
+	analog->work = &work;
+	analog->get_events = &get_events;
+	
+	analog->set_channel_type = &set_channel_type;
 
 	return analog;
 }

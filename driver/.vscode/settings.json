@@ -1,6 +1,10 @@
 {
     "files.associations": {
         "unistd.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "buffers.h": "c",
+        "api.h": "c",
+        "log.h": "c",
+        "utils.h": "c"
     }
 }

@@ -18,13 +18,14 @@ add_executable (
 	src/libs/utils.c
 	src/libs/i2c.c
 	src/libs/ini.c
-	src/devices/devices.c
-	src/devices/analog.c
-	src/devices/buttons.c
-	src/devices/keyboard.c
-	src/devices/ledstrip.c
+	src/devices/modules/devices.c
+	src/devices/modules/analog.c
+	src/devices/modules/buttons.c
+	src/devices/modules/keyboard.c
+	src/devices/modules/ledstrip.c
+	src/devices/worker.c
+	src/devices/events.c
 	src/threads.c
-	src/scheduler.c
 	src/api.c
 	src/console.c
 	src/debug.c

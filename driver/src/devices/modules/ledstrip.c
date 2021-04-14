@@ -4,8 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../libs/i2c.h"
+#include "../../libs/i2c.h"
 #include "ledstrip.h"
+
+#define MAX_SEND_BYTES_PER_LOOP 16   // 16*8*2.5 = 320us
+
 
 static bool init(ledstrip_t *self) {
 	if (!i2c_open(&self->base->i2c, self->base->i2c_address)) {
@@ -14,8 +17,8 @@ static bool init(ledstrip_t *self) {
 	}
 
 	for (int x=0; x < LED_COUNT; x++) {
-		self->framebuffer[x] = 0;
-		self->framebuffer_last[x] = 0;
+		self->framebuffer[x] = LED_OFF;
+		self->framebuffer_last[x] = LED_OFF;
 	}
 
 	// reset led controller
@@ -40,7 +43,7 @@ static bool work(ledstrip_t *self) {
 		if (self->framebuffer[x] != self->framebuffer_last[x]) {
 			buff[buff_len] = (uint8_t)x | 0x80;
 			buff_len++;
-			buff[buff_len] = self->framebuffer[x];
+			buff[buff_len] = (uint8_t)self->framebuffer[x];
 			buff_len++;
 			
 			self->framebuffer_last[x] = self->framebuffer[x];
@@ -59,12 +62,12 @@ static bool work(ledstrip_t *self) {
 	return true;
 }
 
-static void fill(ledstrip_t *self, uint8_t color) {
+static void fill(ledstrip_t *self, led_color_t color) {
 	for (int x=0; x < LED_COUNT; x++)
 		self->framebuffer[x] = color;
 }
 
-static void set(ledstrip_t *self, unsigned int index, uint8_t color) {
+static void set(ledstrip_t *self, int index, led_color_t color) {
 	if (index >= LED_COUNT)
 		return;
 

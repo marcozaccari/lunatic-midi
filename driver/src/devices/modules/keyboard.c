@@ -4,10 +4,10 @@
 //#include <string.h>
 //#include <unistd.h>
 
-#include "../libs/i2c.h"
+#include "../../libs/i2c.h"
 #include "keyboard.h"
 
-static void parse(keyboard_t *self, uint8_t b) {
+inline static void parse(keyboard_t *self, uint8_t b) {
 	uint8_t keyAbs, key;
 	bool keyOn;
 
@@ -29,14 +29,16 @@ static void parse(keyboard_t *self, uint8_t b) {
 		// velocity
 		self->last_key.velocity = 127-b+1;
 
-		self->keys_buffer[self->keys_buffer_head] = self->last_key;
-		self->keys_buffer_head++;
+		self->events[self->events_count] = self->last_key;
+		self->events_count++;
 	}
 }
 
 static bool work(keyboard_t *self) {
 	uint8_t buffer[256];
 	int size = 0;
+
+	self->events_count = 0;
 
 	if (!i2c_read(&self->base->i2c, buffer, 1))
 		return false;
@@ -45,15 +47,15 @@ static bool work(keyboard_t *self) {
 	size = buffer[0];
 	#endif
 
-	if (size) {
-		if (!i2c_read(&self->base->i2c, buffer, size+1))
-			return false;
-		else {
-			for (int k=1; k < size+1; k++) {
-				if (buffer[k] != 0xFF)
-					parse(self, buffer[k]);
-			}
-		}
+	if (!size)
+		return true;
+
+	if (!i2c_read(&self->base->i2c, buffer, size+1))
+		return false;
+
+	for (int k=1; k < size+1; k++) {
+		if (buffer[k] != 0xFF)
+			parse(self, buffer[k]);
 	}
 
 	return true;
@@ -73,10 +75,6 @@ static bool init(keyboard_t *self) {
 	buffer[0] = 0x80;
 	i2c_write(&self->base->i2c, buffer, 1);
 
-	// default settings
-	self->keys_buffer_head = 0;
-	self->keys_buffer_tail = 0;
-
 	self->last_key.key = -1;
 
 	return true;
@@ -86,17 +84,23 @@ static bool done(keyboard_t *self) {
 	return i2c_close(&self->base->i2c);
 }
 
+static int get_events(keyboard_t *self, keyboard_event_t *events) {
+	events = self->events;
+	return self->events_count;
+}
+
 keyboard_t* new_device_keyboard(char *name, int i2c_address, int key_offset) {
 	keyboard_t* keyb = malloc(sizeof(keyboard_t));
 
 	keyb->base = new_device(i2c_address, name, DEVICE_KEYBOARD, keyb);
 
 	keyb->key_offset = key_offset;
-	//self->key_offset = KEYBOARD_DEFAULT_KEY_OFFSET;
 
 	keyb->init = &init;
-	keyb->work = &work;
 	keyb->done = &done;
+
+	keyb->work = &work;
+	keyb->get_events = &get_events;
 
 	return keyb;
 }

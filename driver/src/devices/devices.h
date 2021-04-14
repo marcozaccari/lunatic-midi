@@ -1,5 +1,5 @@
-#ifndef _DEVICE_H
-#define _DEVICE_H
+#ifndef _DEVICES_H
+#define _DEVICES_H
 
 #include "../libs/i2c.h"
 

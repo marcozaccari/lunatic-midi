@@ -3,7 +3,7 @@
 //#include <stdlib.h>
 //#include <unistd.h>
 
-#include "../libs/i2c.h"
+#include "../../libs/i2c.h"
 #include "buttons.h"
 
 
@@ -11,7 +11,9 @@ static bool work(buttons_t *self) {
 	uint8_t buffer[256];
 	int size = 0;
 	uint8_t b;
-	button_t item;
+	button_event_t event;
+
+	self->events_count = 0;
 
 	if (!i2c_read(&self->base->i2c, buffer, 1))
 		return false;
@@ -33,15 +35,15 @@ static bool work(buttons_t *self) {
 			if ((b & 0x80) == 0x80) {
 				b = b & 0x7F;
 
-				item.button = b;
-				item.state = BUTTON_ON;
+				event.button = b;
+				event.state = BUTTON_ON;
 			} else {
-				item.button = b;
-				item.state = BUTTON_OFF;
+				event.button = b;
+				event.state = BUTTON_OFF;
 			}
 
-			self->buttons_buffer[self->buttons_buffer_head] = item;
-			self->buttons_buffer_head++;
+			self->events[self->events_count] = event;
+			self->events_count++;
 		}
 	}
 
@@ -60,15 +62,16 @@ static bool init(buttons_t *self) {
 	buffer[0] = 0xFF;
 	i2c_write(&self->base->i2c, buffer, 1);
 
-	// default settings
-	self->buttons_buffer_head = 0;
-	self->buttons_buffer_tail = 0;
-
 	return true;
 }
 
 static bool done(buttons_t *self) {
 	return i2c_close(&self->base->i2c);
+}
+
+static int get_events(buttons_t *self, button_event_t *events) {
+	events = self->events;
+	return self->events_count;
 }
 
 buttons_t* new_device_buttons(char *name, int i2c_address) {
@@ -77,8 +80,10 @@ buttons_t* new_device_buttons(char *name, int i2c_address) {
 	bt->base = new_device(i2c_address, name, DEVICE_BUTTONS, bt);
 
 	bt->init = &init;
-	bt->work = &work;
 	bt->done = &done;
+
+	bt->work = &work;
+	bt->get_events = &get_events;
 
 	return bt;
 }
