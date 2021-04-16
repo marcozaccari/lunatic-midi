@@ -6,6 +6,8 @@
 
 typedef struct settings_tag {
     char pid_file[STR_MAXSIZE];
+
+    char midi_portname[STR_MAXSIZE];
 } settings_t;
 
 extern settings_t settings;

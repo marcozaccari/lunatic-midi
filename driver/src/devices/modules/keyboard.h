@@ -14,6 +14,8 @@ typedef struct keyboard_tag {
 
 	int key_offset;
 
+    uint8_t velocity_lookup[128];
+
 	keyboard_event_t events[MAX_KEYBOARD_EVENTS];
 	int events_count;
 
@@ -21,6 +23,8 @@ typedef struct keyboard_tag {
 
 	bool (*init)(struct keyboard_tag *self);
 	bool (*done)(struct keyboard_tag *self);
+
+	bool (*load_velocity_lookup)(struct keyboard_tag *self, const char *filename);
 
 	bool (*work)(struct keyboard_tag *self);
 	int (*get_events)(struct keyboard_tag *self, keyboard_event_t *events);

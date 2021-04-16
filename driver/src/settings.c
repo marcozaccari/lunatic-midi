@@ -69,7 +69,16 @@ static void load_device_keyboard(ini_t *cfg, const char *section,
 
 	dlog(_LOG_TERMINAL, "Keyboard offset: %d", *keyboard_offset);
 
-	new_device_keyboard(device_name, i2c_address, *keyboard_offset);
+	keyboard_t* keyboard = new_device_keyboard(device_name, i2c_address, *keyboard_offset);
+
+	char velocity_filename[STR_MAXSIZE];
+
+	if (get_string(cfg, section, "velocity", velocity_filename)) {
+		if (keyboard->load_velocity_lookup(keyboard, velocity_filename))
+			dlog(_LOG_TERMINAL, "Keyboard velocity: %s", velocity_filename);
+		else
+			dlog(_LOG_WARNING, "Keyboard velocity not loaded: %s", velocity_filename);
+	}
 }
 
 static void load_device_analog(ini_t *cfg, const char *section, 
@@ -153,7 +162,11 @@ static bool load_by_ini(const char* filename) {
 	}
 	dlog(_LOG_TERMINAL, "Load settings from \"%s\"", filename);
 
+	// Main
 	get_string(cfg, "main", "pid file", settings.pid_file);
+
+	// MIDI
+	get_string(cfg, "midi", "port", settings.midi_portname);
 
 	// Logging
 	get_string(cfg, "logging", "log file", log_filename);
@@ -161,7 +174,7 @@ static bool load_by_ini(const char* filename) {
 	get_boolean(cfg, "logging", "syslog", &log_to_syslog);
 	
 	// Devices
-    char s[STR_MAXSIZE];
+	char s[STR_MAXSIZE];
 	if (get_string(cfg, "main", "devices", s)) {
 		char *ptr = strtok(s, ",");
 		while (ptr != NULL) {

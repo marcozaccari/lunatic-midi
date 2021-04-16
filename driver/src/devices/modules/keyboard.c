@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 //#include <stdlib.h>
-//#include <string.h>
 //#include <unistd.h>
 
 #include "../../libs/i2c.h"
@@ -10,6 +10,7 @@
 inline static void parse(keyboard_t *self, uint8_t b) {
 	uint8_t keyAbs, key;
 	bool keyOn;
+	int velocity;
 
 	if ((b & 0x80) == 0x80) {
 		// key
@@ -26,8 +27,9 @@ inline static void parse(keyboard_t *self, uint8_t b) {
 			self->last_key.state = KEY_OFF;
 
 	} else {
-		// velocity
-		self->last_key.velocity = 127-b+1;
+		velocity = 127-b+1;
+		velocity = self->velocity_lookup[velocity];
+		self->last_key.velocity = velocity;
 
 		self->events[self->events_count] = self->last_key;
 		self->events_count++;
@@ -75,6 +77,10 @@ static bool init(keyboard_t *self) {
 	buffer[0] = 0x80;
 	i2c_write(&self->base->i2c, buffer, 1);
 
+	// initialize velocity table
+	for (int i=0; i < 128; i++)
+		self->velocity_lookup[i] = i;
+
 	self->last_key.key = -1;
 
 	return true;
@@ -89,6 +95,31 @@ static int get_events(keyboard_t *self, keyboard_event_t *events) {
 	return self->events_count;
 }
 
+static bool load_velocity_lookup(keyboard_t *self, const char *filename) {
+	FILE *fp;
+	int res;
+	int k;
+
+	fp = fopen(filename, "r");
+	if (!fp)
+		return false;
+
+	res = fread(self->velocity_lookup, 1, 128, fp);
+	if (res < 128)
+		return false;
+
+	fclose(fp);
+
+	for (k=0; k < 128; k++) {
+		if (self->velocity_lookup[k] == 0)
+			self->velocity_lookup[k] = 1;
+		else if (self->velocity_lookup[k] == 128)
+			self->velocity_lookup[k] = 127;
+	}
+
+	return true;
+}
+
 keyboard_t* new_device_keyboard(char *name, int i2c_address, int key_offset) {
 	keyboard_t* keyb = malloc(sizeof(keyboard_t));
 
@@ -98,6 +129,8 @@ keyboard_t* new_device_keyboard(char *name, int i2c_address, int key_offset) {
 
 	keyb->init = &init;
 	keyb->done = &done;
+
+	keyb->load_velocity_lookup = &load_velocity_lookup;
 
 	keyb->work = &work;
 	keyb->get_events = &get_events;

@@ -13,6 +13,8 @@
 #include "libs/log.h"
 #include "libs/gpio.h"
 
+#include "midi/midi.h"
+
 #include "settings.h"
 #include "debug.h"
 #include "console.h"
@@ -30,6 +32,9 @@ void list_args(){
 	dlog(_LOG_TERMINAL, " lunatic-driver [--debug] [--config=filename]");
 	dlog(_LOG_TERMINAL, "    debug           - simulate fake inputs");
 	dlog(_LOG_TERMINAL, "    config=filename - override config file");
+	dlog(_LOG_TERMINAL, "\n");
+	dlog(_LOG_TERMINAL, "Diagnostic:");
+	dlog(_LOG_TERMINAL, " lunatic-driver midiports   - list MIDI ports");
 }
 
 void signal_handler(int signo) {
@@ -88,13 +93,14 @@ void parse_params(int argc, char *argv[], bool* debug) {
 
 	for (k = 0; k < argc; k++) {
 		if ((strcmp(argv[k], "help") == 0) ||
-				(strcmp(argv[k], "-help") == 0) ||
-				(strcmp(argv[k], "--help") == 0) ||
-				(strcmp(argv[k], "h") == 0) ||
-				(strcmp(argv[k], "/?") == 0) ||
-				(strcmp(argv[k], "?") == 0) ||
-				(strcmp(argv[k], "/help") == 0) ||
-				(strcmp(argv[k], "/h") == 0)){
+			(strcmp(argv[k], "-help") == 0) ||
+			(strcmp(argv[k], "--help") == 0) ||
+			(strcmp(argv[k], "h") == 0) ||
+			(strcmp(argv[k], "/?") == 0) ||
+			(strcmp(argv[k], "?") == 0) ||
+			(strcmp(argv[k], "/help") == 0) ||
+			(strcmp(argv[k], "/h") == 0)) {
+
 			list_args();
 			exit(EXIT_SUCCESS);
 
@@ -104,6 +110,10 @@ void parse_params(int argc, char *argv[], bool* debug) {
 		} else	if (strncmp(argv[k], "--config=", 9) == 0) {
 			char_ptr = argv[k];
 			strcpy(config_filename, &char_ptr[9]);
+
+		} else if (strcmp(argv[k], "midiports") == 0){
+			print_midi_ports();
+			exit(0);
 		}
 	}
 }
@@ -169,7 +179,12 @@ int main(int argc, char *argv[]) {
 
 	debug_init();
 
+	dlog(_LOG_NOTICE, "Open MIDI port: %s", settings.midi_portname);
+	midi_init(settings.midi_portname);
+
 	bool res = start_driver(debug);
+
+	midi_done();
 
 	log_done();
 

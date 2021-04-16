@@ -47,6 +47,9 @@ static device_t *tasks[MAX_TASKS];
 static int tasks_count = 0;
 static int tasks_cur = 0;
 
+static device_t *keyboards[MAX_TASKS];
+static int keyboards_count = 0;
+
 static volatile bool terminate_request;
 volatile bool scheduler_terminated = true;
 
@@ -75,6 +78,9 @@ bool scheduler_init_tasks() {
 		switch (device->type) {
 			case DEVICE_KEYBOARD:
 				res = ((keyboard_t*)device->obj)->init(device->obj);
+
+				keyboards[keyboards_count] = device;
+				keyboards_count++;
 				break;
 
 			case DEVICE_BUTTONS:
@@ -100,11 +106,28 @@ bool scheduler_init_tasks() {
 		tasks_count++;
 	}
 
+	calculate_tasks_list();
 	print_tasks_list();
 
 	scheduler_terminated = false;
 
 	return true; 
+}
+
+static void calculate_tasks_list() {
+	for (int i=0; i<keyboards_count; i++) {
+		tasks[tasks_count] = keyboards[i];
+		tasks_count++;
+	}
+
+	for (int i=0; i<tasks_count; i++) {
+		device_t *device = tasks[i];
+
+		if (device->type != DEVICE_KEYBOARD) {
+			tasks[tasks_count] = keyboards[i];
+			tasks_count++;
+		}
+	}
 }
 
 static void print_tasks_list() {

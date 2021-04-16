@@ -25,6 +25,8 @@ add_executable (
 	src/devices/modules/ledstrip.c
 	src/devices/worker.c
 	src/devices/events.c
+	src/midi/midi.c
+	src/midi/diagnostic.c
 	src/threads.c
 	src/api.c
 	src/console.c
