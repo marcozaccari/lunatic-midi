@@ -8,9 +8,9 @@
 #include <stdint.h>
 
 // client_id, command; please return true in order to close the socket
-typedef bool(*ipc_callback_t)(int, const char*);
+typedef bool ipc_callback_t(int, const char*);
 
-bool ipc_init(ipc_callback_t callback, int port, int sleep_secs);
+bool ipc_init(ipc_callback_t *callback, int port, int sleep_secs);
 bool ipc_do();
 void ipc_done();
 

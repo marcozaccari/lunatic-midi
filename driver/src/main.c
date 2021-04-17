@@ -14,6 +14,7 @@
 #include "libs/gpio.h"
 
 #include "midi/midi.h"
+#include "ipc/ipc.h"
 
 #include "settings.h"
 #include "debug.h"
@@ -179,15 +180,22 @@ int main(int argc, char *argv[]) {
 
 	debug_init();
 
-	console_init();
+	bool result = true;
 
-	bool res = false;
+	if (!console_init())
+		result = false;
+	
+	if (result) {
+		if (debug)
+			strcpy(settings.midi_portname, "dummy");
+		dlog(_LOG_NOTICE, "Open MIDI port: %s", settings.midi_portname);
+		result = midi_init(settings.midi_portname);
+	}
 
-	if (debug)
-		strcpy(settings.midi_portname, "dummy");
-	dlog(_LOG_NOTICE, "Open MIDI port: %s", settings.midi_portname);
-	if (midi_init(settings.midi_portname))
-		res = start_driver(debug);
+	if (result) 
+		result = start_driver(debug);
+
+	console_done();
 
 	midi_done();
 
@@ -196,7 +204,7 @@ int main(int argc, char *argv[]) {
 	close(pid_file);
 	unlink(settings.pid_file);
 
-	if (!res)
+	if (!result)
 		return EXIT_FAILURE;
 
 	return EXIT_SUCCESS;

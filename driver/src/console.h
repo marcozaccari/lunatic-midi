@@ -1,7 +1,8 @@
 #ifndef _CONSOLE_H
 #define _CONSOLE_H
 
-void console_init();
+bool console_init();
+void console_done();
 
 void console_work();
 

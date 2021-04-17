@@ -6,6 +6,7 @@
 #include "libs/log.h"
 #include "ipc/ipc.h"
 #include "threads.h"
+#include "settings.h"
 
 
 static void change_log_mode(bool reset) {
@@ -24,7 +25,7 @@ void log_cb(char* s) {
       ipc_debug_send(s);
 }
 
-bool ipc_parse_command(int client_id, char *msg) {
+bool ipc_parse_command(int client_id, const char *msg) {
    if (strcmp(msg, "debug") == 0) {
       if (ipc_debug_connected())
          change_log_mode(false);
@@ -80,8 +81,19 @@ static void console_keyboard_do() {
 	}
 }
 
-void console_init() {
+bool console_init() {
 	client_log_callback = log_cb;
+
+	if (settings.ipc_port) {
+		if (!ipc_init(&ipc_parse_command, settings.ipc_port, 10))
+			return false;
+	}	
+
+	return true;
+}
+
+void console_done() {
+	ipc_done();
 }
 
 void console_work() {

@@ -173,6 +173,9 @@ static bool load_by_ini(const char* filename) {
 	// MIDI
 	get_string(cfg, "midi", "port", settings.midi_portname);
 
+	// IPC
+	get_integer(cfg, "ipc", "port", false, &settings.ipc_port);
+
 	// Logging
 	get_string(cfg, "logging", "log file", log_filename);
 	get_integer(cfg, "logging", "min level", false, (int*)&log_min_level);

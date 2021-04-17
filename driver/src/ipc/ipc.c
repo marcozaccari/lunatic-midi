@@ -15,7 +15,7 @@
 #include "ipc.h"
 #include "../libs/log.h"
 
-ipc_callback_t ipc_callback = NULL;
+ipc_callback_t *ipc_callback = NULL;
 
 #define MAX_SIZE 256
 
@@ -34,7 +34,7 @@ bool send_string(int client_id, const char *s);
 
 const char* blank_chars = " \t\n\r\f\v";
 
-bool ipc_init(ipc_callback_t callback, int port, int sleep_secs) {
+bool ipc_init(ipc_callback_t *callback, int port, int sleep_secs) {
 	struct sockaddr_in serv_addr;
 	int i, yes=1;
 
