@@ -66,15 +66,17 @@ bool kbhit() {
 }
 
 size_t string_trim(char *out, const char *str) {
-	int len = strlen(str);
-	if (!len)
+	if (!strlen(str)) {
+		*out = 0;
 		return 0;
+	}
 
-	const char *end;
+	const unsigned char *end;
 	size_t out_size;
 
 	// Trim leading space
-	while ((unsigned char)*str == ' ') 
+	while (
+		(*str == ' ') || (*str == 13) || (*str == 10)) 
 		str++;
 
 	if (*str == 0) {  // All spaces?
@@ -83,12 +85,12 @@ size_t string_trim(char *out, const char *str) {
 	}
 
 	// Trim trailing space
-	end = str + strlen(str) - 1;
-	while (end > str && ((unsigned char)*end == ' ')) 
+	end = (unsigned char*)str + strlen(str) - 1;
+	while ((*end == ' ') || (*end == 13) || (*end == 10)) 
 		end--;
 	end++;
 
-	out_size = end - str + 1;
+	out_size = end - (unsigned char*)str;
 
 	// Copy trimmed string and add null terminator
 	memcpy(out, str, out_size);

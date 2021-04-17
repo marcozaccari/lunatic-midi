@@ -89,7 +89,7 @@ static void close_client(int client_id) {
 	dlog(_LOG_DEBUG, "IPC client disconnected [%d]", client_id);
 }
 
-bool ipc_socket_do() {
+bool ipc_work() {
 	fd_set tempset;
 	int conn_desc;
 	int numready;

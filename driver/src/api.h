@@ -2,6 +2,7 @@
 #define _API_H
 
 bool api_init();
+void api_done();
 
 void* api_thread_start();
 void api_thread_stop();

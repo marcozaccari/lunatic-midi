@@ -68,8 +68,9 @@ void threads_stop() {
 		sleep(1);
 	}
 	
-	if (all_terminated)
+	if (all_terminated) {
 		dlog(_LOG_INFO, "All threads terminated");
-	else
+		api_done();
+	} else
 		dlog(_LOG_WARNING, "Reached threads timeout: forcing ending");
 }

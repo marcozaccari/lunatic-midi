@@ -11,7 +11,7 @@
 typedef bool ipc_callback_t(int, const char*);
 
 bool ipc_init(ipc_callback_t *callback, int port, int sleep_secs);
-bool ipc_do();
+bool ipc_work();
 void ipc_done();
 
 bool ipc_debug_connected();

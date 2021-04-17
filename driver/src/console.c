@@ -6,11 +6,10 @@
 #include "libs/log.h"
 #include "ipc/ipc.h"
 #include "threads.h"
-#include "settings.h"
 
 
-static void change_log_mode(bool reset) {
-	if (reset) 
+void console_change_log_mode(bool restart_to_debug) {
+	if (restart_to_debug) 
 		log_min_level = _LOG_DEBUG;
 	else {
 		log_min_level++;
@@ -21,25 +20,7 @@ static void change_log_mode(bool reset) {
 }
 
 void log_cb(char* s) {
-   if (ipc_debug_connected())
-      ipc_debug_send(s);
-}
-
-bool ipc_parse_command(int client_id, const char *msg) {
-   if (strcmp(msg, "debug") == 0) {
-      if (ipc_debug_connected())
-         change_log_mode(false);
-      else {
-         ipc_set_debug_client(client_id);
-         change_log_mode(true);
-      }
-
-      ipc_debug_send("Logging level: %s\n", loglevel_name[log_min_level]);
-      return false;
-   }
-   
-   ipc_send(client_id, (char*)msg);
-   return false;
+	ipc_debug_send(s);
 }
 
 static int console_keyboard_char_count = 0;
@@ -57,7 +38,7 @@ static void console_keyboard_do() {
 				break;
 
 			case 'l':
-				change_log_mode(console_keyboard_char_count == 0);
+				console_change_log_mode(console_keyboard_char_count == 0);
 				break;
 				
 			/*case '1':
@@ -84,16 +65,10 @@ static void console_keyboard_do() {
 bool console_init() {
 	client_log_callback = log_cb;
 
-	if (settings.ipc_port) {
-		if (!ipc_init(&ipc_parse_command, settings.ipc_port, 10))
-			return false;
-	}	
-
 	return true;
 }
 
 void console_done() {
-	ipc_done();
 }
 
 void console_work() {
