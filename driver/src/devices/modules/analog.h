@@ -28,13 +28,13 @@ typedef struct analog_tag {
 	bool (*done)(struct analog_tag *self);
 
 	bool (*work)(struct analog_tag *self);
-	int (*get_events)(struct analog_tag *self, analog_event_t *events);
+	int (*get_events)(struct analog_tag *self, analog_event_t **events);
 
 	void (*set_channel_type)(struct analog_tag *self, 
 		int channel, analog_channel_type_t type);
 
 } analog_t;
 
-analog_t* new_device_analog(char *name, int i2c_address);
+analog_t* new_device_analog(const char *name, int i2c_address);
 
 #endif

@@ -17,10 +17,10 @@ typedef struct buttons_tag {
 	bool (*done)(struct buttons_tag *self);
 
 	bool (*work)(struct buttons_tag *self);
-	int (*get_events)(struct buttons_tag *self, button_event_t *events);
+	int (*get_events)(struct buttons_tag *self, button_event_t **events);
 
 } buttons_t;
 
-buttons_t* new_device_buttons(char *name, int i2c_address);
+buttons_t* new_device_buttons(const char *name, int i2c_address);
 
 #endif

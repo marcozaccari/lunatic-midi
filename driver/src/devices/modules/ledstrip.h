@@ -21,6 +21,6 @@ typedef struct ledstrip_tag {
 
 } ledstrip_t;
 
-ledstrip_t* new_device_ledstrip(char *name, int i2c_address);
+ledstrip_t* new_device_ledstrip(const char *name, int i2c_address);
 
 #endif

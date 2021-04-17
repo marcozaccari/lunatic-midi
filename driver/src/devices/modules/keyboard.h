@@ -27,10 +27,10 @@ typedef struct keyboard_tag {
 	bool (*load_velocity_lookup)(struct keyboard_tag *self, const char *filename);
 
 	bool (*work)(struct keyboard_tag *self);
-	int (*get_events)(struct keyboard_tag *self, keyboard_event_t *events);
+	int (*get_events)(struct keyboard_tag *self, keyboard_event_t **events);
 
 } keyboard_t;
 
-keyboard_t* new_device_keyboard(char *name, int i2c_address, int key_offset);
+keyboard_t* new_device_keyboard(const char *name, int i2c_address, int key_offset);
 
 #endif

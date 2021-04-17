@@ -4,9 +4,9 @@
 #include <time.h>
 #include <string.h>
 
-#include "libs/log.h"
+#include "../libs/log.h"
 
-#include "debug.h"
+#include "../debug.h"
 #include "events.h"
 #include "worker.h"
 
@@ -51,16 +51,17 @@ static device_t *keyboards[MAX_TASKS];
 static int keyboards_count = 0;
 
 static volatile bool terminate_request;
-volatile bool scheduler_terminated = true;
+volatile bool worker_terminated = true;
 
 static int usleep_latency;
 
 static int calc_usleep_latency();
 static inline void work();
 static void print_tasks_list();
+static void calculate_tasks_list();
 
 
-bool scheduler_init_tasks() {
+bool worker_init() {
 	bool res;
 
  	usleep_latency = calc_usleep_latency();
@@ -109,7 +110,7 @@ bool scheduler_init_tasks() {
 	calculate_tasks_list();
 	print_tasks_list();
 
-	scheduler_terminated = false;
+	worker_terminated = false;
 
 	return true; 
 }
@@ -120,8 +121,9 @@ static void calculate_tasks_list() {
 		tasks_count++;
 	}
 
-	for (int i=0; i<tasks_count; i++) {
-		device_t *device = tasks[i];
+	int devices_count = get_devices_count();
+	for (int i=0; i<devices_count; i++) {
+		device_t *device = get_device(i);
 
 		if (device->type != DEVICE_KEYBOARD) {
 			tasks[tasks_count] = keyboards[i];
@@ -171,7 +173,7 @@ void scheduler_done_tasks() {
 	}
 }
 
-void* scheduler_thread_start() {
+void* worker_thread() {
 	terminate_request = false;
 
 	dlog(_LOG_NOTICE, "Scheduler thread started"); 
@@ -180,11 +182,11 @@ void* scheduler_thread_start() {
 		work();
 	}
 
-	scheduler_terminated = true;
+	worker_terminated = true;
 	return NULL;
 }
 
-void scheduler_thread_stop() {
+void worker_thread_stop() {
 	terminate_request = true;
 }
 
@@ -208,25 +210,25 @@ static inline void work() {
 		case DEVICE_KEYBOARD:
 			((keyboard_t*)device->obj)->work(device->obj);
 
-			keyboard_event_t *events;
-			int count = ((keyboard_t*)device->obj)->get_events(device->obj, events);
-			enqueue_buttons_events(events, count);
+			keyboard_event_t *kb_events;
+			int kb_count = ((keyboard_t*)device->obj)->get_events(device->obj, &kb_events);
+			enqueue_keyboard_events(kb_events, kb_count);
 			break;
 
 		case DEVICE_BUTTONS:
 			((buttons_t*)device->obj)->work(device->obj);
 
-			button_event_t *events;
-			int count = ((buttons_t*)device->obj)->get_events(device->obj, events);
-			enqueue_buttons_events(events, count);
+			button_event_t *btn_events;
+			int btn_count = ((buttons_t*)device->obj)->get_events(device->obj, &btn_events);
+			enqueue_buttons_events(btn_events, btn_count);
 			break;
 
 		case DEVICE_ANALOG:
 			((analog_t*)device->obj)->work(device->obj);
 			
-			analog_event_t *events;
-			int count = ((analog_t*)device->obj)->get_events(device->obj, events);
-			enqueue_analog_events(events, count);
+			analog_event_t *ana_events;
+			int ana_count = ((analog_t*)device->obj)->get_events(device->obj, &ana_events);
+			enqueue_analog_events(ana_events, ana_count);
 			break;
 
 		case DEVICE_LEDSTRIP:

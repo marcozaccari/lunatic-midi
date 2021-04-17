@@ -74,7 +74,7 @@ static void set(ledstrip_t *self, int index, led_color_t color) {
 	self->framebuffer[index] = color;
 }
 
-ledstrip_t* new_device_ledstrip(char *name, int i2c_address) {
+ledstrip_t* new_device_ledstrip(const char *name, int i2c_address) {
 	ledstrip_t* led = malloc(sizeof(ledstrip_t));
 
 	led->base = new_device(i2c_address, name, DEVICE_LEDSTRIP, led);

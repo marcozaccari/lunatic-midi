@@ -179,10 +179,13 @@ int main(int argc, char *argv[]) {
 
 	debug_init();
 
-	dlog(_LOG_NOTICE, "Open MIDI port: %s", settings.midi_portname);
-	midi_init(settings.midi_portname);
+	console_init();
 
-	bool res = start_driver(debug);
+	bool res = false;
+
+	dlog(_LOG_NOTICE, "Open MIDI port: %s", settings.midi_portname);
+	if (midi_init(settings.midi_portname))
+		res = start_driver(debug);
 
 	midi_done();
 

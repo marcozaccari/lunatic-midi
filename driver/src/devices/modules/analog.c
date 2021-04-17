@@ -272,12 +272,12 @@ static bool work(analog_t *self) {
 	return true;
 }
 
-static int get_events(analog_t *self, analog_event_t *events) {
-	events = self->events;
+static int get_events(analog_t *self, analog_event_t **events) {
+	*events = self->events;
 	return self->events_count;
 }
 
-analog_t* new_device_analog(char *name, int i2c_address) {
+analog_t* new_device_analog(const char *name, int i2c_address) {
 	analog_t* analog = malloc(sizeof(analog_t));
 
 	analog->base = new_device(i2c_address, name, DEVICE_ANALOG, analog);

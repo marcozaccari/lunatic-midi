@@ -90,8 +90,8 @@ static bool done(keyboard_t *self) {
 	return i2c_close(&self->base->i2c);
 }
 
-static int get_events(keyboard_t *self, keyboard_event_t *events) {
-	events = self->events;
+static int get_events(keyboard_t *self, keyboard_event_t **events) {
+	*events = self->events;
 	return self->events_count;
 }
 
@@ -120,7 +120,7 @@ static bool load_velocity_lookup(keyboard_t *self, const char *filename) {
 	return true;
 }
 
-keyboard_t* new_device_keyboard(char *name, int i2c_address, int key_offset) {
+keyboard_t* new_device_keyboard(const char *name, int i2c_address, int key_offset) {
 	keyboard_t* keyb = malloc(sizeof(keyboard_t));
 
 	keyb->base = new_device(i2c_address, name, DEVICE_KEYBOARD, keyb);

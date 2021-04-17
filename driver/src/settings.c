@@ -71,11 +71,16 @@ static void load_device_keyboard(ini_t *cfg, const char *section,
 
 	keyboard_t* keyboard = new_device_keyboard(device_name, i2c_address, *keyboard_offset);
 
+	char velocity_name[STR_MAXSIZE];
 	char velocity_filename[STR_MAXSIZE];
 
-	if (get_string(cfg, section, "velocity", velocity_filename)) {
+	if (get_string(cfg, section, "velocity", velocity_name)) {
+		strcpy(velocity_filename, "data/velocity/");
+		strcat(velocity_filename, velocity_name);
+		strcat(velocity_filename, ".dat");
+
 		if (keyboard->load_velocity_lookup(keyboard, velocity_filename))
-			dlog(_LOG_TERMINAL, "Keyboard velocity: %s", velocity_filename);
+			dlog(_LOG_TERMINAL, "Keyboard velocity: %s", velocity_name);
 		else
 			dlog(_LOG_WARNING, "Keyboard velocity not loaded: %s", velocity_filename);
 	}

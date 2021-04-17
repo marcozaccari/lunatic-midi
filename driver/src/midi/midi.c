@@ -48,7 +48,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "midi.h"
-#include "log.h"
+#include "../libs/log.h"
 
 
 /*#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -66,7 +66,6 @@
 snd_rawmidi_t* midiport;
 
 bool midi_init(const char *port_name) {
-	int k;
 	int status;
 	int mode = SND_RAWMIDI_SYNC;
 	//const char* portname = "hw:0,0,0";  // see alsarawportlist.c example program
@@ -114,6 +113,9 @@ bool midi_note_off(int note, int velocity) {
 }
 
 void midi_done() {
+	if (midiport == NULL)
+		return;
+
 	snd_rawmidi_close(midiport);
 
 	// snd_rawmidi_close() does not clear invalid pointer, 

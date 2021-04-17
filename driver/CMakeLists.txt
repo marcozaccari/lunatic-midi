@@ -5,7 +5,7 @@ set (default_flags -Wall; -Werror; -pthread)
 set (debug_flags -g; -Wextra; -Wno-unused-parameter; -Wno-unused-function; -Wfatal-errors; -Werror)
 set (release_flags )
 
-set (linker_libraries "-lpthread -lrt")
+set (linker_libraries "-lpthread -lrt -lasound")
 
 
 project (${project_name})
@@ -18,15 +18,16 @@ add_executable (
 	src/libs/utils.c
 	src/libs/i2c.c
 	src/libs/ini.c
-	src/devices/modules/devices.c
 	src/devices/modules/analog.c
 	src/devices/modules/buttons.c
 	src/devices/modules/keyboard.c
 	src/devices/modules/ledstrip.c
+	src/devices/devices.c
 	src/devices/worker.c
 	src/devices/events.c
 	src/midi/midi.c
 	src/midi/diagnostic.c
+	src/ipc/ipc.c
 	src/threads.c
 	src/api.c
 	src/console.c

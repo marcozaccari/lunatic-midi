@@ -69,12 +69,12 @@ static bool done(buttons_t *self) {
 	return i2c_close(&self->base->i2c);
 }
 
-static int get_events(buttons_t *self, button_event_t *events) {
-	events = self->events;
+static int get_events(buttons_t *self, button_event_t **events) {
+	*events = self->events;
 	return self->events_count;
 }
 
-buttons_t* new_device_buttons(char *name, int i2c_address) {
+buttons_t* new_device_buttons(const char *name, int i2c_address) {
 	buttons_t* bt = malloc(sizeof(buttons_t));
 
 	bt->base = new_device(i2c_address, name, DEVICE_BUTTONS, bt);
