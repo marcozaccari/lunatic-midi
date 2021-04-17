@@ -52,7 +52,6 @@ static inline void work() {
 	ipc_work();
 
 	//dlog(_LOG_TERMINAL, "API thread fired!");
-	//sleep(3);
 }
 
 static bool ipc_parse_command(int client_id, const char *msg) {

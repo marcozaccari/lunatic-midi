@@ -34,11 +34,16 @@ bool send_string(int client_id, const char *s);
 
 const char* blank_chars = " \t\n\r\f\v";
 
+void log_cb(char* s) {
+	ipc_debug_send(s);
+}
+
 bool ipc_init(ipc_callback_t *callback, int port, int sleep_secs) {
 	struct sockaddr_in serv_addr;
 	int i, yes=1;
 
 	ipc_callback = callback;
+	client_log_callback = log_cb;
 	
 	socket_sleep_secs = sleep_secs;
 

@@ -19,10 +19,6 @@ void console_change_log_mode(bool restart_to_debug) {
 	dlog(_LOG_TERMINAL, "Logging level: %s", loglevel_name[log_min_level]);
 }
 
-void log_cb(char* s) {
-	ipc_debug_send(s);
-}
-
 static int console_keyboard_char_count = 0;
 
 static void console_keyboard_do() {
@@ -63,8 +59,6 @@ static void console_keyboard_do() {
 }
 
 bool console_init() {
-	client_log_callback = log_cb;
-
 	return true;
 }
 
@@ -74,4 +68,6 @@ void console_done() {
 void console_work() {
 	if (terminal_active)
 		console_keyboard_do();
+
+	sleep(3);
 }
