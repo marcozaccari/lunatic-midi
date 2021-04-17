@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 
-// Port format "hw:0,0,0"
+// Port format "hw:0,0,0". "dummy" for terminal output only.
 bool midi_init(const char *port_name);
 void midi_done();
 

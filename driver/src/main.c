@@ -183,6 +183,8 @@ int main(int argc, char *argv[]) {
 
 	bool res = false;
 
+	if (debug)
+		strcpy(settings.midi_portname, "dummy");
 	dlog(_LOG_NOTICE, "Open MIDI port: %s", settings.midi_portname);
 	if (midi_init(settings.midi_portname))
 		res = start_driver(debug);

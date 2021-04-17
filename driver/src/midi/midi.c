@@ -65,6 +65,9 @@
 
 snd_rawmidi_t* midiport;
 
+bool dummy_port = false;
+
+
 bool midi_init(const char *port_name) {
 	int status;
 	int mode = SND_RAWMIDI_SYNC;
@@ -72,6 +75,11 @@ bool midi_init(const char *port_name) {
 
 	midiport = NULL;
 
+	if (strcmp(port_name, "dummy") == 0) {
+		dummy_port = true;
+		return true;
+	}
+	
 	if ((status = snd_rawmidi_open(NULL, &midiport, port_name, mode)) < 0) {
 		dlog(_LOG_ERROR, "MIDI error: %s", snd_strerror(status));
 		return false;
@@ -88,6 +96,11 @@ bool midi_note_on(int note, int velocity) {
 	msg[1] = note;
 	msg[2] = velocity;
 
+	if (dummy_port) {
+		dlog(_LOG_DEBUG, "MIDI Note ON: %d [vel %d]", note, velocity);
+		return true;
+	}
+
 	//printf("Note ON: %u %u 0x%02X [0x%02X] (%u 0x%02X "BYTE_TO_BINARY_PATTERN")\n", note, velocity, velocity, calc_velocity, raw, raw, BYTE_TO_BINARY(raw));
 	if ((status = snd_rawmidi_write(midiport, msg, 3)) < 0)
 		return false; // snd_strerror(status)
@@ -100,9 +113,16 @@ bool midi_note_off(int note, int velocity) {
 	int status;
 	char msg[3];
 
+	velocity = 0;
+
 	msg[0] = 0x90;
 	msg[1] = note;
-	msg[2] = 0;
+	msg[2] = velocity;
+
+	if (dummy_port) {
+		dlog(_LOG_DEBUG, "MIDI Note OFF: %d [vel %d]", note, velocity);
+		return true;
+	}
 
 	//printf("Note OFF: %u %u\n", note, velocity);
 

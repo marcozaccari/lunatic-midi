@@ -102,9 +102,6 @@ bool worker_init() {
 				device->name, device->i2c_address);
 			return false;
 		}
-
-		tasks[tasks_count] = device;
-		tasks_count++;
 	}
 
 	calculate_tasks_list();
@@ -126,7 +123,7 @@ static void calculate_tasks_list() {
 		device_t *device = get_device(i);
 
 		if (device->type != DEVICE_KEYBOARD) {
-			tasks[tasks_count] = keyboards[i];
+			tasks[tasks_count] = device;
 			tasks_count++;
 		}
 	}
