@@ -25,10 +25,10 @@
 #define TIMESLICES_US 500
 
 /*enum tasks {
-	KEYBOARD_TASK,
-	BUTTONS_TASK,  // 7ms antibounce
+	KEYBOARD_TASK,  // 300us lag (velocity on,off)
+	BUTTONS_TASK,  // 7ms antibounce lag
 	ADC_TASK,
-	LED_MONITOR_TASK  // 2.5ms delay
+	LED_MONITOR_TASK  // needs a delay of 2.5ms after every update
 };
 
 #define SCHEDULER_TASKS_MAX 7

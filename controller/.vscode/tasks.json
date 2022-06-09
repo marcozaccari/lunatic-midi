@@ -1,0 +1,24 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Regenerate Config",
+            "type": "shell",
+            "command": "go",
+            "args": [ "generate" ],
+            "options": {
+                "cwd": "${workspaceFolder}/config",
+            },
+        },
+        {
+            "label": "Build and Deploy",
+            "type": "shell",
+            "command": "./deploy.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/bin",
+            },
+        },
+    ]
+}

@@ -5,6 +5,21 @@
         "buffers.h": "c",
         "api.h": "c",
         "log.h": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "hash_map": "c",
+        "compare": "c",
+        "optional": "c",
+        "fstream": "c",
+        "functional": "c",
+        "iomanip": "c",
+        "istream": "c",
+        "mutex": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "streambuf": "c",
+        "system_error": "c",
+        "*.tcc": "c",
+        "type_traits": "c",
+        "valarray": "c"
     }
 }

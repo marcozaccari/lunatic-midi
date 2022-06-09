@@ -1,0 +1,13 @@
+{
+	"MIDI": {
+		"PortName": "hw:2,0,0"
+	},
+	"Devices": {
+		"Buttons": {
+			"I2C": "0x31"
+		},
+		"LedStrip": {
+			"I2C": "0x33"
+		}
+	}
+}

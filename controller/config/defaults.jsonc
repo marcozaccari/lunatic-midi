@@ -1,0 +1,57 @@
+{
+    "MIDI": {
+        // Get ports names using "amidi -l" or "lunatic-midi midiports"
+        // In order to obtain virtual ports, use:
+        //   "sudo modprobe snd-virmidi" or
+        //   "sudo echo 'snd-virmidi' >> /etc/modules" or
+        //   "sudo echo 'snd-virmidi index=n' >> /etc/modprobe.d/snd-virmidi.conf"
+        "PortName": "hw:0,0,0"
+        
+        // Raspberry Zero
+        //"PortName": "hw:2,0,0"
+    },
+
+    "Devices": {
+
+        "Keyboards": [
+            {
+                // I2C address
+                "I2C": "0x00",
+
+                // Notes offset
+                "Offset": 0,
+
+                // Velocity curve (data/velocity/*.dat)
+                "Velocity": ""
+            }
+        ],
+
+        "Buttons": {
+                // I2C address
+                "I2C": "0x00"
+        },
+
+        "Analog": {
+                // I2C address
+                "I2C": "0x00",
+
+                // Channel type: "slider" (default) / "ribbon"
+                "Channel1": "",
+                "Channel2": "",
+                "Channel3": "",
+                "Channel4": ""
+        },
+
+        "LedStrip": {
+                // I2C address
+                "I2C": "0x00"
+        }
+    },
+
+    "Logging": {
+		"Stdout": true,
+		"Syslog": false,
+		"File": "",
+		"TCP_Port": 0
+    }
+}

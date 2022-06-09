@@ -1,0 +1,30 @@
+{
+	// config.MIDI
+	"MIDI": {
+		// string - Get ports names using "amidi -l" or "lunatic-midi midiports"
+		// In order to obtain virtual ports, use:
+		//   "sudo modprobe snd-virmidi" or
+		//   "sudo echo 'snd-virmidi' >> /etc/modules" or
+		//   "sudo echo 'snd-virmidi index=n' >> /etc/modprobe.d/snd-virmidi.conf"
+		// 
+		// Raspberry Zero: "hw:2,0,0"
+		"PortName": "hw:0,0,0"
+	},
+	// config.Devices
+	"Devices": {
+		// config.DeviceKeyboard[]
+		"Keyboards": [],
+		// config.DeviceButtons
+		"Buttons": {
+			// string - I2C address (ex "0x30")
+			"I2C": ""
+		},
+		// config.DeviceAnalog[]
+		"Analogs": [],
+		// config.DeviceLedStrip
+		"LedStrip": {
+			// string - I2C address (ex "0x30")
+			"I2C": ""
+		}
+	}
+}
