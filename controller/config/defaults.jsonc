@@ -15,8 +15,8 @@
 
         "Keyboards": [
             {
-                // I2C address
-                "I2C": "0x00",
+                // I2C address (ex: "0x30")
+                "I2C": "",
 
                 // Notes offset
                 "Offset": 0,
@@ -27,13 +27,13 @@
         ],
 
         "Buttons": {
-                // I2C address
-                "I2C": "0x00"
+                // I2C address (ex: "0x30")
+                "I2C": ""
         },
 
         "Analog": {
-                // I2C address
-                "I2C": "0x00",
+                // I2C address (ex: "0x30")
+                "I2C": "",
 
                 // Channel type: "slider" (default) / "ribbon"
                 "Channel1": "",
@@ -43,8 +43,8 @@
         },
 
         "LedStrip": {
-                // I2C address
-                "I2C": "0x00"
+                // I2C address (ex: "0x30")
+                "I2C": ""
         }
     },
 
