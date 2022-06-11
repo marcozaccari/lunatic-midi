@@ -1,11 +1,14 @@
 package hardware
 
 type I2C struct {
+	Address byte
 }
 
 type I2CBuffer [256]byte
 
 func (i *I2C) Open(addr byte) error {
+	i.Address = addr
+
 	return nil
 }
 

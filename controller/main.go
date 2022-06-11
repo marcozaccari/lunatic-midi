@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/config"
@@ -62,93 +61,21 @@ func main() {
 	setLogs(*fdebug)
 
 	logs.Info(config.Version)
-	logs.Infof("config file: %s", config.GetFilename())
+	logs.Infof("Config file: %s", config.GetFilename())
 
-	// TODO
-	readConfigDevices()
+	scheduler, err := devices.NewScheduler(config.Cfg.Devices)
+	if err != nil {
+		logs.Error("Error initializing scheduler: ", err)
+	}
+	scheduler.Work()
 
+	scheduler.Done()
 	config.Done()
 	logs.Done()
 
 	if err != nil {
 		os.Exit(-2)
 	}
-}
-
-type Device interface {
-	Work() error
-}
-
-var devs []Device
-
-func readConfigDevices() error {
-	devs := make([]Device, 0, 8)
-
-	for _, cfgKeyb := range config.Cfg.Devices.Keyboards {
-		addr, err := strconv.ParseInt(cfgKeyb.I2C, 0, 0)
-		if err != nil {
-			return err
-		}
-
-		keyb, err := devices.NewKeyboard(byte(addr), cfgKeyb.Offset)
-		if err != nil {
-			return err
-		}
-
-		devs = append(devs, keyb)
-
-		logs.Infof("Keyboard initialized (%s)", cfgKeyb.I2C)
-	}
-
-	if config.Cfg.Devices.Buttons.I2C != "" {
-		addr, err := strconv.ParseInt(config.Cfg.Devices.Buttons.I2C, 0, 0)
-		if err != nil {
-			return err
-		}
-
-		ana, err := devices.NewButtons(byte(addr))
-		if err != nil {
-			return err
-		}
-
-		devs = append(devs, ana)
-
-		logs.Infof("Buttons initialized (%s)", config.Cfg.Devices.Buttons.I2C)
-	}
-
-	if config.Cfg.Devices.Analog.I2C != "" {
-		addr, err := strconv.ParseInt(config.Cfg.Devices.Analog.I2C, 0, 0)
-		if err != nil {
-			return err
-		}
-
-		ana, err := devices.NewAnalog(byte(addr))
-		if err != nil {
-			return err
-		}
-
-		devs = append(devs, ana)
-
-		logs.Infof("Analog initialized (%s)", config.Cfg.Devices.Analog.I2C)
-	}
-
-	if config.Cfg.Devices.LedStrip.I2C != "" {
-		addr, err := strconv.ParseInt(config.Cfg.Devices.Buttons.I2C, 0, 0)
-		if err != nil {
-			return err
-		}
-
-		ana, err := devices.NewLedStrip(byte(addr))
-		if err != nil {
-			return err
-		}
-
-		devs = append(devs, ana)
-
-		logs.Infof("LedStrip initialized (%s)", config.Cfg.Devices.LedStrip.I2C)
-	}
-
-	return nil
 }
 
 func setLogs(debug bool) {

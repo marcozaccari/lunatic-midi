@@ -30,6 +30,13 @@ type KeyboardEvent struct {
 	Velocity byte
 }
 
+type KeyState bool
+
+const (
+	KeyOff KeyState = false
+	KeyOn  KeyState = true
+)
+
 func NewKeyboard(i2cAddr byte, KeyOffset int) (*KeyboardDevice, error) {
 	dev := &KeyboardDevice{
 		keyOffset:      KeyOffset,
