@@ -3,9 +3,25 @@
 		"PortName": "hw:2,0,0"
 	},
 	"Devices": {
+		"Keyboards": [
+			{
+				"I2C": "0x30",
+				"Velocity": "hard1"
+			}
+		],
+
 		"Buttons": {
 			"I2C": "0x31"
 		},
+
+		"Analog": {
+			"I2C": "0x48",
+			"Channel1": "slider",
+			"Channel2": "slider",
+			"Channel3": "slider",
+			"Channel4": "ribbon"
+		},
+
 		"LedStrip": {
 			"I2C": "0x33"
 		}
