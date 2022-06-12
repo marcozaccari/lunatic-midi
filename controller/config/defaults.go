@@ -1,10 +1,7 @@
 package config
 
-// Depends: go install github.com/marco-sacchi/go2jsonc/cmd/go2jsonc
-// go:generate go2jsonc -type=Config -out=default.jsonc
-
-// Depends: go get -u github.com/modulo-srl/mu-config/json2struct
-//go:generate json2struct -out=data.go defaults.jsonc
+// Depends: go install github.com/marco-sacchi/go2jsonc/cmd/go2jsonc@latest
+//go:generate go2jsonc -type=Config -out=defaults.jsonc -doc-types=NotStructFields|NotArrayFields|NotMapFields
 
 import (
 	_ "embed"
@@ -13,6 +10,15 @@ import (
 type Config struct {
 	MIDI    MIDI
 	Devices Devices
+
+	Logging Log
+}
+
+type Log struct {
+	TCPPort int // 0 = disabled
+	File    string
+	Stdout  bool
+	Syslog  bool
 }
 
 type MIDI struct {
@@ -29,7 +35,7 @@ type MIDI struct {
 type Devices struct {
 	Keyboards []DeviceKeyboard
 	Buttons   DeviceButtons
-	Analogs   []DeviceAnalog
+	Analog    DeviceAnalog
 	LedStrip  DeviceLedStrip
 }
 
@@ -64,7 +70,21 @@ func ConfigDefaults() *Config {
 			PortName: "hw:0,0,0",
 		},
 
-		Devices: Devices{},
+		Devices: Devices{
+			Keyboards: []DeviceKeyboard{
+				{},
+			},
+			Buttons:  DeviceButtons{},
+			Analog:   DeviceAnalog{},
+			LedStrip: DeviceLedStrip{},
+		},
+
+		Logging: Log{
+			TCPPort: 0,
+			File:    "",
+			Stdout:  false,
+			Syslog:  false,
+		},
 	}
 }
 

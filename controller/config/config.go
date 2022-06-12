@@ -8,7 +8,7 @@ import (
 
 const Version = "lunatic-midi 0.1"
 
-var Cfg Data
+var Cfg Config
 
 var configCtrl *settings.Settings
 

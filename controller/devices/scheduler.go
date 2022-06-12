@@ -23,7 +23,7 @@ type deviceInt interface {
 	String() string
 }
 
-func NewScheduler(cfg config.Data_Devices) (*Scheduler, error) {
+func NewScheduler(cfg config.Devices) (*Scheduler, error) {
 	s := &Scheduler{
 		devices: make([]deviceInt, 0, 8),
 		tasks:   make([]deviceInt, 0, 16),
@@ -48,7 +48,7 @@ func (s *Scheduler) Done() {
 
 const (
 	// Time window for every task
-	Timeslices_us = 500
+	TimeSlices_us = 500
 )
 
 /*enum tasks {
@@ -63,13 +63,29 @@ func (s *Scheduler) Work() {
 		for _, dev := range s.devices {
 			hardware.DebugLedOn()
 
+			start := time.Now()
+
+			// TODO get events
 			dev.Work()
 
+			// Measure elapsed time of current task
+			// and calculate remaining waiting time
+			// in order to complete current time window.
+			duration := time.Since(start)
+			remainder_us := TimeSlices_us - int(duration.Microseconds()) - s.sleepLatency_us
+
+			if remainder_us > 0 {
+				hardware.DebugLedOff()
+				time.Sleep(time.Microsecond * time.Duration(remainder_us))
+			}
+
+			hardware.DebugLedOn()
 			hardware.DebugLedOff()
 		}
 	}()
 }
 
+// TODO frequenza maggiore tastiere, timeout giusto per leds
 func (s *Scheduler) calcTasksList() {
 	for _, dev := range s.devices {
 		if dev.GetType() == DeviceKeyboard {
@@ -107,7 +123,7 @@ func (s *Scheduler) calcSleepLatency() {
 	logs.Infof("usleep() latency = %dus", s.sleepLatency_us)
 }
 
-func (s *Scheduler) parseDevices(cfg config.Data_Devices) error {
+func (s *Scheduler) parseDevices(cfg config.Devices) error {
 	for _, cfgKeyb := range cfg.Keyboards {
 		addr, err := strconv.ParseInt(cfgKeyb.I2C, 0, 0)
 		if err != nil {
