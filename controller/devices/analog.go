@@ -1,6 +1,9 @@
 package devices
 
-import "github.com/marcozaccari/lunatic-midi/devices/hardware"
+import (
+	"github.com/marcozaccari/lunatic-midi/devices/hardware"
+	"github.com/marcozaccari/lunatic-midi/events"
+)
 
 const (
 	AnalogChannels = 4
@@ -18,20 +21,16 @@ type AnalogDevice struct {
 
 	channelsType [AnalogChannels]ChannelType
 
-	events      [AnalogChannels]AnalogEvent
-	eventsCount int
+	events events.Channel[events.Analog]
 
 	lastValues        [AnalogChannels]int
 	continousSampling bool
 }
 
-type AnalogEvent struct {
-	Channel int
-	Value   int
-}
-
-func NewAnalog(i2cAddr byte) (*AnalogDevice, error) {
-	dev := &AnalogDevice{}
+func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, error) {
+	dev := &AnalogDevice{
+		events: ch,
+	}
 
 	dev.Device.Type = DeviceAnalog
 
@@ -74,9 +73,7 @@ func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType) {
 }
 
 func (dev *AnalogDevice) Work() error {
-	var event AnalogEvent
-
-	dev.eventsCount = 0
+	var event events.Analog
 
 	for channel := 0; channel < AnalogChannels; channel++ {
 		event.Channel = channel
@@ -85,8 +82,7 @@ func (dev *AnalogDevice) Work() error {
 		event.Value = 0
 
 		if dev.lastValues[event.Channel] != event.Value {
-			dev.events[dev.eventsCount] = event
-			dev.eventsCount++
+			dev.events <- event
 		}
 	}
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/marcozaccari/lunatic-midi/config"
 	"github.com/marcozaccari/lunatic-midi/devices/hardware"
+	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
 
@@ -13,7 +14,11 @@ type Scheduler struct {
 	devices []deviceInt
 	tasks   []deviceInt
 
+	chans events.Channels
+
 	sleepLatency_us int
+
+	stopChan chan struct{}
 }
 
 type deviceInt interface {
@@ -23,10 +28,11 @@ type deviceInt interface {
 	String() string
 }
 
-func NewScheduler(cfg config.Devices) (*Scheduler, error) {
+func NewScheduler(cfg config.Devices, chans events.Channels) (*Scheduler, error) {
 	s := &Scheduler{
 		devices: make([]deviceInt, 0, 8),
 		tasks:   make([]deviceInt, 0, 16),
+		chans:   chans,
 	}
 
 	err := s.parseDevices(cfg)
@@ -40,7 +46,9 @@ func NewScheduler(cfg config.Devices) (*Scheduler, error) {
 	return s, nil
 }
 
-func (s *Scheduler) Done() {
+func (s *Scheduler) Stop() {
+	s.stopChan <- struct{}{}
+
 	for _, dev := range s.devices {
 		dev.Done()
 	}
@@ -49,43 +57,51 @@ func (s *Scheduler) Done() {
 const (
 	// Time window for every task
 	TimeSlices_us = 500
+
+	KeyboardPriority = 500  // 300us lag (velocity on,off)
+	ButtonsPriority  = 7000 // 7ms antibounce lag
+	AdcPriority      = 500
+	LedStripPriority = 2500 // needs a delay of 2.5ms after every update
 )
 
-/*enum tasks {
-	KEYBOARD_TASK,  // 300us lag (velocity on,off)
-	BUTTONS_TASK,  // 7ms antibounce lag
-	ADC_TASK,
-	LED_MONITOR_TASK  // needs a delay of 2.5ms after every update
-};*/
-
 func (s *Scheduler) Work() {
-	go func() {
-		for _, dev := range s.devices {
-			hardware.DebugLedOn()
+	s.stopChan = make(chan struct{})
+	defer close(s.stopChan)
 
-			start := time.Now()
+	for {
+		select {
+		case <-s.stopChan:
+			return
+		default:
+			for _, dev := range s.devices {
+				hardware.DebugLedOn()
 
-			// TODO get events
-			dev.Work()
+				start := time.Now()
 
-			// Measure elapsed time of current task
-			// and calculate remaining waiting time
-			// in order to complete current time window.
-			duration := time.Since(start)
-			remainder_us := TimeSlices_us - int(duration.Microseconds()) - s.sleepLatency_us
+				err := dev.Work()
+				if err != nil {
+					logs.Errorf("device %s error: %s", dev, err)
+				}
 
-			if remainder_us > 0 {
+				// Measure elapsed time of current task
+				// and calculate remaining waiting time
+				// in order to complete current time window.
+				duration := time.Since(start)
+				remainder_us := TimeSlices_us - int(duration.Microseconds()) - s.sleepLatency_us
+
+				if remainder_us > 0 {
+					hardware.DebugLedOff()
+					time.Sleep(time.Microsecond * time.Duration(remainder_us))
+				}
+
+				hardware.DebugLedOn()
 				hardware.DebugLedOff()
-				time.Sleep(time.Microsecond * time.Duration(remainder_us))
 			}
-
-			hardware.DebugLedOn()
-			hardware.DebugLedOff()
 		}
-	}()
+	}
 }
 
-// TODO frequenza maggiore tastiere, timeout giusto per leds
+// TODO gestire bene le priorità
 func (s *Scheduler) calcTasksList() {
 	for _, dev := range s.devices {
 		if dev.GetType() == DeviceKeyboard {
@@ -130,7 +146,7 @@ func (s *Scheduler) parseDevices(cfg config.Devices) error {
 			return err
 		}
 
-		keyb, err := NewKeyboard(byte(addr), cfgKeyb.Offset)
+		keyb, err := NewKeyboard(byte(addr), cfgKeyb.Offset, s.chans.Keyboard)
 		if err != nil {
 			return err
 		}
@@ -146,7 +162,7 @@ func (s *Scheduler) parseDevices(cfg config.Devices) error {
 			return err
 		}
 
-		buttons, err := NewButtons(byte(addr))
+		buttons, err := NewButtons(byte(addr), s.chans.Buttons)
 		if err != nil {
 			return err
 		}
@@ -162,7 +178,7 @@ func (s *Scheduler) parseDevices(cfg config.Devices) error {
 			return err
 		}
 
-		ana, err := NewAnalog(byte(addr))
+		ana, err := NewAnalog(byte(addr), s.chans.Analog)
 		if err != nil {
 			return err
 		}

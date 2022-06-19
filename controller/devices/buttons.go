@@ -1,6 +1,9 @@
 package devices
 
-import "github.com/marcozaccari/lunatic-midi/devices/hardware"
+import (
+	"github.com/marcozaccari/lunatic-midi/devices/hardware"
+	"github.com/marcozaccari/lunatic-midi/events"
+)
 
 const (
 	MaxButtonsEvents = 32
@@ -9,17 +12,13 @@ const (
 type ButtonsDevice struct {
 	Device
 
-	events      [MaxButtonsEvents]ButtonsEvent
-	eventsCount int
+	events events.Channel[events.Buttons]
 }
 
-type ButtonsEvent struct {
-	Button int
-	State  KeyState
-}
-
-func NewButtons(i2cAddr byte) (*ButtonsDevice, error) {
-	dev := &ButtonsDevice{}
+func NewButtons(i2cAddr byte, ch events.Channel[events.Buttons]) (*ButtonsDevice, error) {
+	dev := &ButtonsDevice{
+		events: ch,
+	}
 
 	dev.Device.Type = DeviceButtons
 
@@ -48,9 +47,7 @@ func (dev *ButtonsDevice) Work() error {
 	var buffer hardware.I2CBuffer
 	var size int
 	var b byte
-	var event ButtonsEvent
-
-	dev.eventsCount = 0
+	var event events.Buttons
 
 	err := dev.i2c.Read(&buffer, 1)
 	if err != nil {
@@ -75,14 +72,13 @@ func (dev *ButtonsDevice) Work() error {
 				b = b & 0x7F
 
 				event.Button = int(b)
-				event.State = KeyOn
+				event.State = true
 			} else {
 				event.Button = int(b)
-				event.State = KeyOff
+				event.State = false
 			}
 
-			dev.events[dev.eventsCount] = event
-			dev.eventsCount++
+			dev.events <- event
 		}
 	}
 

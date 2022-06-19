@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/marcozaccari/lunatic-midi/devices/hardware"
+	"github.com/marcozaccari/lunatic-midi/events"
 )
 
 const (
@@ -18,27 +19,14 @@ type KeyboardDevice struct {
 	keyOffset      int
 	velocityLookup []byte
 
-	lastKey KeyboardEvent
+	lastKey events.Keyboard
 
-	events      [MaxKeyboardEvents]KeyboardEvent
-	eventsCount int
+	events events.Channel[events.Keyboard]
 }
 
-type KeyboardEvent struct {
-	Key      int
-	State    KeyState
-	Velocity byte
-}
-
-type KeyState bool
-
-const (
-	KeyOff KeyState = false
-	KeyOn  KeyState = true
-)
-
-func NewKeyboard(i2cAddr byte, KeyOffset int) (*KeyboardDevice, error) {
+func NewKeyboard(i2cAddr byte, KeyOffset int, ch events.Channel[events.Keyboard]) (*KeyboardDevice, error) {
 	dev := &KeyboardDevice{
+		events:         ch,
 		keyOffset:      KeyOffset,
 		velocityLookup: make([]byte, 128),
 	}
@@ -76,8 +64,6 @@ func (dev *KeyboardDevice) Done() {
 func (dev *KeyboardDevice) Work() error {
 	var buffer hardware.I2CBuffer
 	var size int
-
-	dev.eventsCount = 0
 
 	err := dev.i2c.Read(&buffer, 1)
 	if err != nil {
@@ -119,9 +105,9 @@ func (dev *KeyboardDevice) parse(b byte) {
 		dev.lastKey.Key = key
 
 		if keyOn {
-			dev.lastKey.State = KeyOn
+			dev.lastKey.State = true
 		} else {
-			dev.lastKey.State = KeyOff
+			dev.lastKey.State = false
 		}
 
 	} else {
@@ -129,8 +115,7 @@ func (dev *KeyboardDevice) parse(b byte) {
 		velocity = dev.velocityLookup[velocity]
 		dev.lastKey.Velocity = velocity
 
-		dev.events[dev.eventsCount] = dev.lastKey
-		dev.eventsCount++
+		dev.events <- dev.lastKey
 	}
 }
 
