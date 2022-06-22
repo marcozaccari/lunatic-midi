@@ -1,6 +1,11 @@
 package devices
 
-import "github.com/marcozaccari/lunatic-midi/devices/hardware"
+import (
+	"sync"
+	"time"
+
+	"github.com/marcozaccari/lunatic-midi/devices/hardware"
+)
 
 const (
 	LedCount = 60
@@ -24,7 +29,9 @@ const (
 type LedStripDevice struct {
 	Device
 
+	mu sync.RWMutex
 	framebuffer,
+
 	framebufferLast [LedCount]LedColor
 }
 
@@ -63,6 +70,8 @@ func (dev *LedStripDevice) Work() error {
 	var buffer hardware.I2CBuffer
 	var buffLen int
 
+	dev.mu.RLock()
+
 	for x := 0; x < LedCount; x++ {
 		if dev.framebuffer[x] != dev.framebufferLast[x] {
 			buffer[buffLen] = byte(x) | 0x80
@@ -78,6 +87,8 @@ func (dev *LedStripDevice) Work() error {
 		}
 	}
 
+	dev.mu.RUnlock()
+
 	if buffLen > 0 {
 		buffer[buffLen] = 0x40 // repaint command
 		buffLen++
@@ -92,15 +103,37 @@ func (dev *LedStripDevice) Work() error {
 }
 
 func (dev *LedStripDevice) Fill(color LedColor) {
+	dev.mu.Lock()
+	defer dev.mu.Unlock()
+
 	for x := 0; x < LedCount; x++ {
 		dev.framebuffer[x] = color
 	}
 }
 
 func (dev *LedStripDevice) Set(index int, color LedColor) {
+	dev.mu.Lock()
+	defer dev.mu.Unlock()
+
 	if index >= LedCount {
 		return
 	}
 
 	dev.framebuffer[index] = color
+}
+
+func (dev *LedStripDevice) Blink(color LedColor, count int, on, off time.Duration) {
+	dev.mu.Lock()
+	defer dev.mu.Unlock()
+
+	dev.Fill(LedOff)
+	time.Sleep(time.Millisecond * 10)
+
+	for k := 0; k < count; k++ {
+		dev.Fill(color)
+		time.Sleep(on)
+
+		dev.Fill(LedOff)
+		time.Sleep(off)
+	}
 }
