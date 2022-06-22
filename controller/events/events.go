@@ -6,6 +6,8 @@ type Buttons struct {
 }
 
 type Keyboard struct {
+	KeyboardNum int
+
 	Key      int
 	State    bool
 	Velocity byte

@@ -24,7 +24,7 @@ type KeyboardDevice struct {
 	events events.Channel[events.Keyboard]
 }
 
-func NewKeyboard(i2cAddr byte, KeyOffset int, ch events.Channel[events.Keyboard]) (*KeyboardDevice, error) {
+func NewKeyboard(i2cAddr byte, num int, KeyOffset int, ch events.Channel[events.Keyboard]) (*KeyboardDevice, error) {
 	dev := &KeyboardDevice{
 		events:         ch,
 		keyOffset:      KeyOffset,
@@ -53,6 +53,7 @@ func NewKeyboard(i2cAddr byte, KeyOffset int, ch events.Channel[events.Keyboard]
 	}
 
 	dev.lastKey.Key = -1
+	dev.lastKey.KeyboardNum = num
 
 	return dev, nil
 }

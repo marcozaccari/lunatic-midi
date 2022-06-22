@@ -140,13 +140,13 @@ func (s *Scheduler) calcSleepLatency() {
 }
 
 func (s *Scheduler) parseDevices(cfg config.Devices) error {
-	for _, cfgKeyb := range cfg.Keyboards {
+	for i, cfgKeyb := range cfg.Keyboards {
 		addr, err := strconv.ParseInt(cfgKeyb.I2C, 0, 0)
 		if err != nil {
 			return err
 		}
 
-		keyb, err := NewKeyboard(byte(addr), cfgKeyb.Offset, s.chans.Keyboard)
+		keyb, err := NewKeyboard(byte(addr), cfgKeyb.Offset, i, s.chans.Keyboard)
 		if err != nil {
 			return err
 		}
