@@ -14,6 +14,8 @@ type Scheduler struct {
 	devices []deviceInt
 	tasks   []deviceInt
 
+	leds *LedStripDevice
+
 	chans events.Channels
 
 	sleepLatency_us int
@@ -200,9 +202,14 @@ func (s *Scheduler) parseDevices(cfg config.Devices) error {
 		}
 
 		s.devices = append(s.devices, leds)
+		s.leds = leds
 
 		logs.Infof("LedStrip initialized (%s)", cfg.LedStrip.I2C)
 	}
 
 	return nil
+}
+
+func (s *Scheduler) GetLedStrip() *LedStripDevice {
+	return s.leds
 }

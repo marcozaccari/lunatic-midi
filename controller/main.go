@@ -13,7 +13,7 @@ import (
 	"github.com/marcozaccari/lunatic-midi/config"
 	"github.com/marcozaccari/lunatic-midi/devices"
 	"github.com/marcozaccari/lunatic-midi/events"
-	"github.com/marcozaccari/lunatic-midi/modes"
+	"github.com/marcozaccari/lunatic-midi/programs/linear_keyboard"
 	"github.com/modulo-srl/sparalog"
 	"github.com/modulo-srl/sparalog/logs"
 	sync "github.com/sasha-s/go-deadlock"
@@ -87,8 +87,8 @@ func start() error {
 
 	go devScheduler.Work()
 
-	defMode := modes.NewDefault(ch)
-	go defMode.Work()
+	program := linear_keyboard.NewProgram(ch, devScheduler.GetLedStrip(), midi)
+	go program.Work()
 
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc,
@@ -101,7 +101,7 @@ func start() error {
 	logs.Warnf("terminating by signal \"%v\"", sig)
 
 	devScheduler.Stop()
-	defMode.Stop()
+	program.Stop()
 
 	return nil
 }
