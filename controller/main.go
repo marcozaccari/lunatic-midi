@@ -13,6 +13,7 @@ import (
 	"github.com/marcozaccari/lunatic-midi/config"
 	"github.com/marcozaccari/lunatic-midi/devices"
 	"github.com/marcozaccari/lunatic-midi/events"
+	"github.com/marcozaccari/lunatic-midi/midi"
 	"github.com/marcozaccari/lunatic-midi/programs/linear_keyboard"
 	"github.com/modulo-srl/sparalog"
 	"github.com/modulo-srl/sparalog/logs"
@@ -41,10 +42,16 @@ func main() {
 	fdebug := flag.Bool("debug", false, "Logs on stdout/stderr")
 	fdefaultConfig := flag.Bool("default-config", false, "Show default config")
 	fconfig := flag.String("config-file", "config.json", "Set config file's absolute or relative path")
+	fmidiports := flag.Bool("midiports", false, "Show system MIDI ports")
 	flag.Parse()
 
 	if *fversion {
 		usage()
+		return
+	}
+
+	if *fmidiports {
+		midi.PrintPorts()
 		return
 	}
 
@@ -67,7 +74,10 @@ func main() {
 	logs.Info(config.Version)
 	logs.Infof("Config file: %s", config.GetFilename())
 
-	err = start()
+	err = start(*fdebug)
+	if err != nil {
+		logs.Error(err)
+	}
 
 	config.Done()
 	logs.Done()
@@ -77,16 +87,28 @@ func main() {
 	}
 }
 
-func start() error {
+func start(debug bool) error {
 	ch := events.NewChannels()
+
+	midi := midi.New()
+	var midiPort string
+	if !debug {
+		midiPort = config.Cfg.MIDI.PortName
+	}
+	portName, err := midi.Init(midiPort)
+	if err != nil {
+		return fmt.Errorf("initializing MIDI port \"%s\": %s", portName, err)
+	}
+	logs.Infof("Opened MIDI port \"%s\"", portName)
 
 	devScheduler, err := devices.NewScheduler(config.Cfg.Devices, ch)
 	if err != nil {
-		return fmt.Errorf("Error initializing devices scheduler: %s", err)
+		return fmt.Errorf("initializing devices scheduler: %s", err)
 	}
 
 	go devScheduler.Work()
 
+	time.Sleep(time.Second * 20)
 	program := linear_keyboard.NewProgram(ch, devScheduler.GetLedStrip(), midi)
 	go program.Work()
 
@@ -102,6 +124,7 @@ func start() error {
 
 	devScheduler.Stop()
 	program.Stop()
+	midi.Done()
 
 	return nil
 }

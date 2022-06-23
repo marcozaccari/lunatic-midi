@@ -14,5 +14,6 @@ require (
 	github.com/mitchellh/panicwrap v1.0.0 // indirect
 	github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5 // indirect
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a // indirect
+	gitlab.com/gomidi/midi/v2 v2.0.22 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 )
