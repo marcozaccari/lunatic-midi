@@ -18,7 +18,9 @@ type Program struct {
 }
 
 type MIDI interface {
-	SendKey(ch int, key int, state bool, vel byte)
+	SendKey(ch byte, key byte, state bool, vel byte)
+	SendPitchBend(ch byte, vel int16)
+	SendCtrlChange(ch byte, ctrl byte, value byte)
 }
 
 func NewProgram(chans events.Channels, leds *devices.LedStripDevice, midi MIDI) *Program {
@@ -42,10 +44,23 @@ func (p *Program) Work() {
 			if p.splitKey > 0 && ev.Key >= p.splitKey {
 				ch = 1
 			}
-			p.midi.SendKey(ch, ev.Key, ev.State, ev.Velocity)
+			p.midi.SendKey(byte(ch), byte(ev.Key), ev.State, ev.Velocity)
 
-		// TODO
-		//case ev := <-m.channels.Analog:
+		case ev := <-p.chans.Analog:
+			p.midi.SendCtrlChange(0, byte(ev.Channel), byte(ev.Value))
+
+		case ev := <-p.chans.MIDI:
+			ledCh := devices.LedBlue + devices.LedColor(ev.Ch)
+			if ledCh > devices.LedWhite {
+				ledCh = devices.LedWhite
+			}
+
+			switch {
+			case ev.NoteOn > 0:
+				p.leds.Set(ev.NoteOn, ledCh)
+			case ev.NoteOff > 0:
+				p.leds.Set(ev.NoteOff, ledCh)
+			}
 
 		case ev := <-p.chans.Buttons:
 			if ev.Button == 1 && ev.State {

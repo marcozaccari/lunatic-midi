@@ -6,14 +6,13 @@
 		"Keyboards": [
 			{
 				"I2C": "0x30",
+				"Offset": 0,
 				"Velocity": "hard1"
 			}
 		],
-
 		"Buttons": {
 			"I2C": "0x31"
 		},
-
 		"Analog": {
 			"I2C": "0x48",
 			"Channel1": "slider",
@@ -21,7 +20,6 @@
 			"Channel3": "slider",
 			"Channel4": "ribbon"
 		},
-
 		"LedStrip": {
 			"I2C": "0x33"
 		}
