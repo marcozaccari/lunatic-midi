@@ -77,8 +77,12 @@ func (dev *AnalogDevice) Work() error {
 	for channel := 0; channel < AnalogChannels; channel++ {
 		event.Channel = channel
 
-		// TODO
-		event.Value = 0
+		ui16, err := dev.readSample()
+		if err != nil {
+			return err
+		}
+
+		event.Value = int(ui16)
 
 		if dev.lastValues[event.Channel] != event.Value {
 			dev.events <- event
@@ -108,8 +112,7 @@ func (dev *AnalogDevice) readSample() (uint16, error) {
 		return 0, err
 	}
 
-	var val uint16
-	val = uint16(buffer[0])<<8 | uint16(buffer[1])
+	val := uint16(buffer[0])<<8 | uint16(buffer[1])
 
 	return (val >> (15 - ADS_realBits)), nil
 }
