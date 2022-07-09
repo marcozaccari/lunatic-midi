@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 	"github.com/marcozaccari/lunatic-midi/events"
 )
 
@@ -38,11 +37,9 @@ func NewKeyboard(i2cAddr byte, num int, KeyOffset int, ch events.Channel[events.
 		return nil, err
 	}
 
-	var buffer hardware.I2CBuffer
-
 	// disable velocity on note-off
-	buffer[0] = 0x80
-	err = dev.i2c.Write(&buffer, 1)
+	buffer := [1]byte{0x80}
+	err = dev.i2c.Write(buffer[:], 1)
 	if err != nil {
 		return nil, err
 	}
@@ -63,10 +60,10 @@ func (dev *KeyboardDevice) Done() {
 }
 
 func (dev *KeyboardDevice) Work() error {
-	var buffer hardware.I2CBuffer
+	var buffer [256]byte
 	var size int
 
-	err := dev.i2c.Read(&buffer, 1)
+	err := dev.i2c.Read(buffer[:], 1)
 	if err != nil {
 		return err
 	}
@@ -76,7 +73,7 @@ func (dev *KeyboardDevice) Work() error {
 		return nil
 	}
 
-	err = dev.i2c.Read(&buffer, size+1)
+	err = dev.i2c.Read(buffer[:], size+1)
 	if err != nil {
 		return err
 	}

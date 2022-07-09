@@ -1,7 +1,6 @@
 package devices
 
 import (
-	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 	"github.com/marcozaccari/lunatic-midi/events"
 )
 
@@ -94,20 +93,17 @@ const (
 )
 
 func (dev *AnalogDevice) readSample() (uint16, error) {
-	var buffer hardware.I2CBuffer
-
-	buffer[0] = 0
-	buffer[1] = 0
+	buffer := [2]byte{0, 0}
 
 	if !dev.continousSampling {
 		// read from conversion register
-		err := dev.i2c.Write(&buffer, 1)
+		err := dev.i2c.Write(buffer[:], 1)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	err := dev.i2c.Read(&buffer, 2)
+	err := dev.i2c.Read(buffer[:], 2)
 	if err != nil {
 		return 0, err
 	}
@@ -208,7 +204,7 @@ type analogConfig struct {
 }
 
 func (dev *AnalogDevice) writeConfig(config analogConfig) error {
-	var buffer hardware.I2CBuffer
+	var buffer [3]byte
 
 	buffer[0] = 1 // write to config register
 	buffer[1] = byte(config.Reference) |
@@ -228,7 +224,7 @@ func (dev *AnalogDevice) writeConfig(config analogConfig) error {
 		dev.continousSampling = true
 	}
 
-	err := dev.i2c.Write(&buffer, 3)
+	err := dev.i2c.Write(buffer[:], 3)
 	if err != nil {
 		return err
 	}
@@ -237,7 +233,7 @@ func (dev *AnalogDevice) writeConfig(config analogConfig) error {
 		buffer[0] = 0
 
 		// prepare to read from conversion register
-		err := dev.i2c.Write(&buffer, 1)
+		err := dev.i2c.Write(buffer[:], 1)
 		if err != nil {
 			return err
 		}

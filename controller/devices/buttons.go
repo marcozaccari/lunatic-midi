@@ -1,7 +1,6 @@
 package devices
 
 import (
-	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 	"github.com/marcozaccari/lunatic-midi/events"
 )
 
@@ -27,11 +26,9 @@ func NewButtons(i2cAddr byte, ch events.Channel[events.Buttons]) (*ButtonsDevice
 		return nil, err
 	}
 
-	var buffer hardware.I2CBuffer
-
 	// Reset led
-	buffer[0] = 0xFF
-	err = dev.i2c.Write(&buffer, 1)
+	buffer := [1]byte{0xFF}
+	err = dev.i2c.Write(buffer[:], 1)
 	if err != nil {
 		return nil, err
 	}
@@ -44,12 +41,12 @@ func (dev *ButtonsDevice) Done() {
 }
 
 func (dev *ButtonsDevice) Work() error {
-	var buffer hardware.I2CBuffer
+	var buffer [256]byte
 	var size int
 	var b byte
 	var event events.Buttons
 
-	err := dev.i2c.Read(&buffer, 1)
+	err := dev.i2c.Read(buffer[:], 1)
 	if err != nil {
 		return err
 	}
@@ -59,7 +56,7 @@ func (dev *ButtonsDevice) Work() error {
 		return nil
 	}
 
-	err = dev.i2c.Read(&buffer, size+1)
+	err = dev.i2c.Read(buffer[:], size+1)
 	if err != nil {
 		return err
 	}

@@ -3,8 +3,6 @@ package devices
 import (
 	"sync"
 	"time"
-
-	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 )
 
 const (
@@ -51,10 +49,8 @@ func NewLedStrip(i2cAddr byte) (*LedStripDevice, error) {
 	}
 
 	// reset led controller
-	var buffer hardware.I2CBuffer
-
-	buffer[0] = 0xFF
-	err = dev.i2c.Write(&buffer, 1)
+	buffer := [1]byte{0xFF}
+	err = dev.i2c.Write(buffer[:], 1)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +63,7 @@ func (dev *LedStripDevice) Done() {
 }
 
 func (dev *LedStripDevice) Work() error {
-	var buffer hardware.I2CBuffer
+	var buffer [256]byte
 	var buffLen int
 
 	dev.mu.RLock()
@@ -93,7 +89,7 @@ func (dev *LedStripDevice) Work() error {
 		buffer[buffLen] = 0x40 // repaint command
 		buffLen++
 
-		err := dev.i2c.Write(&buffer, buffLen)
+		err := dev.i2c.Write(buffer[:], buffLen)
 		if err != nil {
 			return err
 		}
