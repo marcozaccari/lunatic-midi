@@ -13,6 +13,14 @@
             },
         },
         {
+            "label": "Sync and build to devel",
+            "type": "shell",
+            "command": "./deploy-devel.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/bin",
+            },
+        },
+        {
             "label": "Build and Deploy",
             "type": "shell",
             "command": "./deploy.sh",
