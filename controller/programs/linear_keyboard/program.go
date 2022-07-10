@@ -3,6 +3,7 @@ package linear_keyboard
 import (
 	"github.com/marcozaccari/lunatic-midi/devices"
 	"github.com/marcozaccari/lunatic-midi/events"
+	"github.com/modulo-srl/sparalog/logs"
 )
 
 type Program struct {
@@ -40,6 +41,8 @@ func (p *Program) Work() {
 	for {
 		select {
 		case ev := <-p.chans.Keyboard:
+			logs.Tracef("keyboard event: %v", ev)
+
 			ch := 0
 			if p.splitKey > 0 && ev.Key >= p.splitKey {
 				ch = 1
@@ -47,9 +50,13 @@ func (p *Program) Work() {
 			p.midi.SendKey(byte(ch), byte(ev.Key), ev.State, ev.Velocity)
 
 		case ev := <-p.chans.Analog:
+			logs.Tracef("analog event: %v", ev)
+
 			p.midi.SendCtrlChange(0, byte(ev.Channel), byte(ev.Value))
 
 		case ev := <-p.chans.MIDI:
+			logs.Tracef("midi event: %v", ev)
+
 			ledCh := devices.LedBlue + devices.LedColor(ev.Ch)
 			if ledCh > devices.LedWhite {
 				ledCh = devices.LedWhite
@@ -63,6 +70,8 @@ func (p *Program) Work() {
 			}
 
 		case ev := <-p.chans.Buttons:
+			logs.Tracef("buttons event: %v", ev)
+
 			if ev.Button == 1 && ev.State {
 				// Split
 				p.splitKey = p.getSplit()

@@ -85,6 +85,8 @@ func (dev *AnalogDevice) Work() error {
 		event.Value = int(ui16)
 
 		if dev.lastValues[event.Channel] != event.Value {
+			dev.lastValues[event.Channel] = event.Value
+
 			dev.events <- event
 		}
 	}

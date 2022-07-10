@@ -7,7 +7,7 @@ check_errors() {
 	fi
 }
 
-HIGH='\033[0;31m'
+HIGH='\033[0;32m'
 NC='\033[0m'
 
 echo -e "$HIGH Sync sources local => remote $NC\n"
