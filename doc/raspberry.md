@@ -25,7 +25,9 @@
 ```sh
 cd
 
-echo "export PATH=$PATH:/usr/local/go/bin" >> .bashrc
+sudo su
+echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
+exit
 
 mkdir downloads
 cd downloads
@@ -38,3 +40,11 @@ exit
 go version
 ```
 
+### Bin path and dependencies
+
+```sh
+sudo mkdir /opt/lunatic
+sudo chown pi:pi /opt/lunatic
+
+sudo apt install libasound2-dev
+```
