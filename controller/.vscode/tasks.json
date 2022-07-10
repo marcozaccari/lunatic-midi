@@ -21,6 +21,14 @@
             },
         },
         {
+            "label": "Run devel",
+            "type": "shell",
+            "command": "./run-devel.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/bin",
+            },
+        },
+        {
             "label": "Build and Deploy",
             "type": "shell",
             "command": "./deploy.sh",
