@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/marcozaccari/lunatic-midi/events"
+	"github.com/modulo-srl/sparalog/logs"
 )
 
 const (
@@ -73,6 +74,8 @@ func (dev *KeyboardDevice) Work() error {
 		return nil
 	}
 
+	//logs.Tracef("keyboard received %d bytes", size)
+
 	err = dev.i2c.Read(buffer[:], size+1)
 	if err != nil {
 		return err
@@ -110,6 +113,10 @@ func (dev *KeyboardDevice) parse(b byte) {
 
 	} else {
 		velocity = 127 - b + 1
+		if velocity > 127 {
+			velocity = 127
+		}
+
 		velocity = dev.velocityLookup[velocity]
 		dev.lastKey.Velocity = velocity
 
@@ -118,6 +125,8 @@ func (dev *KeyboardDevice) parse(b byte) {
 }
 
 func (dev *KeyboardDevice) LoadVelocity(filename string) error {
+	logs.Info("Load velocity table from " + filename)
+
 	f, err := os.Open(filename)
 	if err != nil {
 		return err

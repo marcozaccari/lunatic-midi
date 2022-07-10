@@ -101,14 +101,14 @@ func start(debug bool) error {
 	}
 	logs.Infof("Opened MIDI port \"%s\"", portName)
 
-	devScheduler, err := devices.NewScheduler(config.Cfg.Devices, ch)
+	// TODO velocity path
+	devScheduler, err := devices.NewScheduler(config.Cfg.Devices, "bin/velocity", ch)
 	if err != nil {
 		return fmt.Errorf("initializing devices scheduler: %s", err)
 	}
 
 	go devScheduler.Work()
 
-	time.Sleep(time.Second * 20)
 	program := linear_keyboard.NewProgram(ch, devScheduler.GetLedStrip(), midi)
 	go program.Work()
 

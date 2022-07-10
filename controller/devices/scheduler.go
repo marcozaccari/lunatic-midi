@@ -30,14 +30,14 @@ type deviceInt interface {
 	String() string
 }
 
-func NewScheduler(cfg config.Devices, chans events.Channels) (*Scheduler, error) {
+func NewScheduler(cfg config.Devices, velocityPath string, chans events.Channels) (*Scheduler, error) {
 	s := &Scheduler{
 		devices: make([]deviceInt, 0, 8),
 		tasks:   make([]deviceInt, 0, 16),
 		chans:   chans,
 	}
 
-	err := s.parseDevices(cfg)
+	err := s.parseDevices(cfg, velocityPath)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +80,7 @@ func (s *Scheduler) Work() {
 
 				start := time.Now()
 
+				//logs.Tracef("get device %s", dev)
 				err := dev.Work()
 				if err != nil {
 					logs.Errorf("device %s error: %s", dev, err)
@@ -90,6 +91,8 @@ func (s *Scheduler) Work() {
 				// in order to complete current time window.
 				duration := time.Since(start)
 				remainder_us := TimeSlices_us - int(duration.Microseconds()) - s.sleepLatency_us
+
+				//logs.Tracef("need to sleep %d us", remainder_us)
 
 				if remainder_us > 0 {
 					hardware.DebugLedOff()
@@ -141,7 +144,7 @@ func (s *Scheduler) calcSleepLatency() {
 	logs.Infof("usleep() latency = %dus", s.sleepLatency_us)
 }
 
-func (s *Scheduler) parseDevices(cfg config.Devices) error {
+func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error {
 	for i, cfgKeyb := range cfg.Keyboards {
 		addr, err := strconv.ParseInt(cfgKeyb.I2C, 0, 0)
 		if err != nil {
@@ -149,6 +152,11 @@ func (s *Scheduler) parseDevices(cfg config.Devices) error {
 		}
 
 		keyb, err := NewKeyboard(byte(addr), cfgKeyb.Offset, i, s.chans.Keyboard)
+		if err != nil {
+			return err
+		}
+
+		err = keyb.LoadVelocity(velocityPath + "/" + cfgKeyb.Velocity + ".dat")
 		if err != nil {
 			return err
 		}
