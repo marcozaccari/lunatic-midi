@@ -93,10 +93,12 @@ func (dev *AnalogDevice) Work() error {
 	}
 
 	if dev.channelsType[dev.curChannel] == AnalogChannelRibbon {
-		ui16 >>= 1
+		ui16 >>= 5
 		if ui16 > 500 {
 			ui16 = 0
 		}
+	} else {
+		ui16 >>= 6
 	}
 
 	if dev.lastValues[dev.curChannel] != int(ui16) {
@@ -115,44 +117,21 @@ func (dev *AnalogDevice) Work() error {
 	return nil
 }
 
-const (
-	ADS_realBits = 12
-)
-
 func (dev *AnalogDevice) setChannel(channel int) error {
 	/*err := dev.reset()
 	if err != nil {
 		return err
 	}*/
 
-	var cfg analogConfig
-
-	if dev.channelsType[channel] == AnalogChannelSlider {
-		// Slider
-		// TODO
-		cfg = analogConfig{
-			Channel:            ConfigChannels[channel],
-			Gain:               GAIN_4V,
-			Speed:              SPS_860,
-			ConversionMode:     CONV_ONESHOT,
-			Comparator:         COMP_TRADITIONAL,
-			ComparatorPolarity: COMP_POL_HIGH,
-			ComparatorLatching: COMP_LAT_OFF,
-			ComparatorQueue:    COMP_QUEUE_OFF,
-		}
-	} else {
-		// Ribbon
-		// TODO
-		cfg = analogConfig{
-			Channel:            ConfigChannels[channel],
-			Gain:               GAIN_4V,
-			Speed:              SPS_860,
-			ConversionMode:     CONV_ONESHOT,
-			Comparator:         COMP_TRADITIONAL,
-			ComparatorPolarity: COMP_POL_HIGH,
-			ComparatorLatching: COMP_LAT_OFF,
-			ComparatorQueue:    COMP_QUEUE_OFF,
-		}
+	cfg := analogConfig{
+		Channel:            ConfigChannels[channel],
+		Gain:               GAIN_4V,
+		Speed:              SPS_860,
+		ConversionMode:     CONV_ONESHOT,
+		Comparator:         COMP_TRADITIONAL,
+		ComparatorPolarity: COMP_POL_HIGH,
+		ComparatorLatching: COMP_LAT_OFF,
+		ComparatorQueue:    COMP_QUEUE_OFF,
 	}
 
 	return dev.writeConfig(cfg)
@@ -179,7 +158,7 @@ func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
 		val = 0
 	}
 
-	return uint16(uint16(val) >> (16 - ADS_realBits)), nil
+	return uint16(val), nil
 }
 
 type ConfigChannel byte
