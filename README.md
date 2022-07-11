@@ -17,15 +17,12 @@
 
     package " Controller board  " #seashell {
         [Controller] #white
-        [Driver] #white
 
         MIDI -[#blueviolet;thickness=4] [Controller]
-        [Controller] - IPC
-        IPC - [Driver]
     }
 
     interface "bus" as BUS #aliceblue;line:blue
-    [Driver] -[#blue;thickness=4]- BUS
+    [Controller] -[#blue;thickness=4]- BUS
 
     package " Component(s) " {
         node "Logic module" as LMOD #honeydew 
