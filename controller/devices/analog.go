@@ -23,16 +23,25 @@ const (
 type AnalogDevice struct {
 	Device
 
-	channelsType [AnalogChannels]ChannelType
+	channels   [AnalogChannels]analogChannel
+	curChannel int
 
 	events events.Channel[events.Analog]
 
-	lastValues        [AnalogChannels]int
 	continousSampling bool
 
-	curChannel int
-
 	lastRead time.Time
+}
+
+type analogChannel struct {
+	enabled bool
+
+	typ ChannelType
+
+	rawMin, rawMax uint
+	bits           int
+
+	lastValue int
 }
 
 func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, error) {
@@ -48,7 +57,7 @@ func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, e
 	}
 
 	for i := 0; i < AnalogChannels; i++ {
-		dev.lastValues[i] = -1
+		dev.channels[i].lastValue = -1
 	}
 
 	dev.continousSampling = false
@@ -76,8 +85,16 @@ func (dev *AnalogDevice) Done() {
 	dev.i2c.Close()
 }
 
-func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType) {
-	dev.channelsType[channel] = ctype
+func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType, bits int, rawMin, rawMax uint) {
+	dev.channels[channel] = analogChannel{
+		enabled: true,
+		typ:     ctype,
+		bits:    bits,
+		rawMin:  rawMin,
+		rawMax:  rawMax,
+	}
+
+	logs.Info("Set channel %d: %v", channel, dev.channels[channel])
 }
 
 func (dev *AnalogDevice) Work() error {
@@ -87,34 +104,60 @@ func (dev *AnalogDevice) Work() error {
 	}
 	dev.lastRead = time.Now()
 
-	ui16, err := dev.readSample(dev.curChannel)
+	curCh := dev.getNextEnabledChannelNum()
+	if curCh == -1 {
+		// All channels disabled
+		return nil
+	}
+	dev.curChannel = curCh
+	channel := dev.channels[curCh]
+
+	ui16, err := dev.readSample(curCh)
 	if err != nil {
 		return err
 	}
 
-	if dev.channelsType[dev.curChannel] == AnalogChannelRibbon {
-		ui16 >>= 5
-		if ui16 > 500 {
+	ui16 >>= (16 - channel.bits)
+	if uint(ui16) > channel.rawMax {
+		if dev.channels[curCh].typ == AnalogChannelRibbon {
 			ui16 = 0
+		} else {
+			ui16 = uint16(channel.rawMax)
 		}
-	} else {
-		ui16 >>= 6
+	} else if uint(ui16) < channel.rawMin {
+		ui16 = uint16(channel.rawMin)
 	}
 
-	if dev.lastValues[dev.curChannel] != int(ui16) {
-		if dev.lastValues[dev.curChannel] >= 0 {
+	if channel.lastValue != int(ui16) {
+		if channel.lastValue >= 0 {
 			dev.events <- events.Analog{
-				Channel: dev.curChannel,
+				Channel: curCh,
 				Value:   int(ui16),
 			}
 		}
-		dev.lastValues[dev.curChannel] = int(ui16)
+		channel.lastValue = int(ui16)
 	}
 
 	dev.curChannel = (dev.curChannel + 1) % AnalogChannels
+	dev.curChannel = dev.getNextEnabledChannelNum()
 	dev.setChannel(dev.curChannel)
 
 	return nil
+}
+
+// Find next enabled channel
+func (dev *AnalogDevice) getNextEnabledChannelNum() int {
+	curCh := dev.curChannel
+
+	for !dev.channels[curCh].enabled {
+		curCh = (curCh + 1) % AnalogChannels
+		if curCh == dev.curChannel {
+			// All channels disabled
+			return -1
+		}
+	}
+
+	return curCh
 }
 
 func (dev *AnalogDevice) setChannel(channel int) error {

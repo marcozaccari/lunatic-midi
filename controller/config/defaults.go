@@ -52,11 +52,17 @@ type DeviceButtons struct {
 type DeviceAnalog struct {
 	I2C string
 
-	// Channel type: "slider" (default) / "ribbon"
-	Channel1 string
-	Channel2 string
-	Channel3 string
-	Channel4 string
+	Channels [4]AnalogChannel
+}
+
+type AnalogChannel struct {
+	// Channel type: "slider" / "ribbon"
+	Type string
+
+	Bits int
+
+	RawMin int
+	RawMax int
 }
 
 type DeviceLedStrip struct {
@@ -74,8 +80,15 @@ func ConfigDefaults() *Config {
 			Keyboards: []DeviceKeyboard{
 				{},
 			},
-			Buttons:  DeviceButtons{},
-			Analog:   DeviceAnalog{},
+			Buttons: DeviceButtons{},
+			Analog: DeviceAnalog{
+				Channels: [4]AnalogChannel{
+					AnalogChannel{},
+					AnalogChannel{},
+					AnalogChannel{},
+					AnalogChannel{},
+				},
+			},
 			LedStrip: DeviceLedStrip{},
 		},
 

@@ -27,14 +27,48 @@
 		"Analog": {
 			// string
 			"I2C": "",
-			// string - Channel type: "slider" (default) / "ribbon"
-			"Channel1": "",
-			// string
-			"Channel2": "",
-			// string
-			"Channel3": "",
-			// string
-			"Channel4": ""
+			"Channels": [
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				},
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				},
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				},
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				}
+			]
 		},
 		"LedStrip": {
 			// string - I2C address (ex "0x30")

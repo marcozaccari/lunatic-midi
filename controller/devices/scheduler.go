@@ -135,36 +135,19 @@ func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error 
 			return err
 		}
 
-		stype := cfg.Analog.Channel1
-		switch stype {
-		case "slider":
-			ana.SetChannelType(0, AnalogChannelSlider)
-		case "ribbon":
-			ana.SetChannelType(0, AnalogChannelRibbon)
-		}
+		for i, cfgAna := range cfg.Analog.Channels {
+			if cfgAna.Type == "" || cfgAna.Bits == 0 {
+				continue
+			}
 
-		stype = cfg.Analog.Channel2
-		switch stype {
-		case "slider":
-			ana.SetChannelType(1, AnalogChannelSlider)
-		case "ribbon":
-			ana.SetChannelType(1, AnalogChannelRibbon)
-		}
-
-		stype = cfg.Analog.Channel3
-		switch stype {
-		case "slider":
-			ana.SetChannelType(2, AnalogChannelSlider)
-		case "ribbon":
-			ana.SetChannelType(2, AnalogChannelRibbon)
-		}
-
-		stype = cfg.Analog.Channel4
-		switch stype {
-		case "slider":
-			ana.SetChannelType(3, AnalogChannelSlider)
-		case "ribbon":
-			ana.SetChannelType(3, AnalogChannelRibbon)
+			var typ ChannelType
+			switch cfgAna.Type {
+			case "slider":
+				typ = AnalogChannelSlider
+			case "ribbon":
+				typ = AnalogChannelRibbon
+			}
+			ana.SetChannelType(i, typ, cfgAna.Bits, uint(cfgAna.RawMin), uint(cfgAna.RawMax))
 		}
 
 		s.devices = append(s.devices, ana)

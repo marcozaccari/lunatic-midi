@@ -15,10 +15,33 @@
 		},
 		"Analog": {
 			"I2C": "0x48",
-			"Channel1": "slider",
-			"Channel2": "slider",
-			"Channel3": "slider",
-			"Channel4": "ribbon"
+
+			"Channels": [
+				{ 
+					"Type": "slider",
+					"Bits": 9,
+					"RawMin": 0,
+					"RawMax": 10240
+				},
+				{ 
+					"Type": "slider",
+					"Bits": 9,
+					"RawMin": 0,
+					"RawMax": 10240
+				},
+				{ 
+					"Type": "slider",
+					"Bits": 9,
+					"RawMin": 0,
+					"RawMax": 10240
+				},
+				{ 
+					"Type": "ribbon",
+					"Bits": 8,
+					"RawMin": 0,
+					"RawMax": 10240
+				}
+			]
 		},
 		"LedStrip": {
 			"I2C": "0x33"
