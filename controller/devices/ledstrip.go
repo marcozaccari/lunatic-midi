@@ -111,7 +111,7 @@ func (dev *LedStripDevice) Set(index int, color LedColor) {
 	dev.mu.Lock()
 	defer dev.mu.Unlock()
 
-	if index >= LedCount {
+	if index < 0 || index >= LedCount {
 		return
 	}
 

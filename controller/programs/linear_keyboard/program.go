@@ -49,6 +49,12 @@ func (p *Program) Work() {
 			}
 			p.midi.SendKey(byte(ch), byte(ev.Key), ev.State, ev.Velocity)
 
+			if ev.State {
+				p.leds.Set(ev.Key-1, devices.LedRed)
+			} else {
+				p.leds.Set(ev.Key-1, devices.LedOff)
+			}
+
 		case ev := <-p.chans.Analog:
 			logs.Tracef("analog event: %v", ev)
 
