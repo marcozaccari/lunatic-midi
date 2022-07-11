@@ -2,14 +2,18 @@ package devices
 
 import (
 	"github.com/marcozaccari/lunatic-midi/events"
+	"github.com/modulo-srl/sparalog/logs"
 )
 
 const (
+	MaxButtons       = 128
 	MaxButtonsEvents = 32
 )
 
 type ButtonsDevice struct {
 	Device
+
+	lastState [MaxButtons]bool
 
 	events events.Channel[events.Buttons]
 }
@@ -66,14 +70,22 @@ func (dev *ButtonsDevice) Work() error {
 			b = buffer[k]
 
 			if (b & 0x80) == 0x80 {
+				event.State = true
+
 				b = b & 0x7F
+				event.Button = int(b)
+			} else {
+				event.State = false
 
 				event.Button = int(b)
-				event.State = true
-			} else {
-				event.Button = int(b)
-				event.State = false
 			}
+
+			if dev.lastState[event.Button] == event.State {
+				// Firmware or hardware error
+				logs.Warnf("buttons: ignoring invalid %v", event)
+				continue
+			}
+			dev.lastState[event.Button] = event.State
 
 			dev.events <- event
 		}

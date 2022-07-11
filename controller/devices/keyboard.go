@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	MaxKeyboardKeys   = 128
 	MaxKeyboardEvents = 64
 )
 
@@ -19,7 +20,8 @@ type KeyboardDevice struct {
 	keyOffset      int
 	velocityLookup []byte
 
-	lastKey events.Keyboard
+	lastState [MaxKeyboardKeys]bool
+	lastKey   events.Keyboard
 
 	events events.Channel[events.Keyboard]
 }
@@ -119,6 +121,13 @@ func (dev *KeyboardDevice) parse(b byte) {
 
 		velocity = dev.velocityLookup[velocity]
 		dev.lastKey.Velocity = velocity
+
+		if dev.lastState[dev.lastKey.Key] == dev.lastKey.State {
+			// Firmware or hardware error
+			logs.Warnf("keyboard: ignoring invalid %v", dev.lastKey)
+			return
+		}
+		dev.lastState[dev.lastKey.Key] = dev.lastKey.State
 
 		dev.events <- dev.lastKey
 	}
