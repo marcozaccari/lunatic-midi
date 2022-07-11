@@ -1,6 +1,7 @@
 package devices
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -86,12 +87,13 @@ func (dev *LedStripDevice) Work() error {
 	dev.mu.RUnlock()
 
 	if buffLen > 0 {
-		buffer[buffLen] = 0x40 // repaint command
+		// add repaint command
+		buffer[buffLen] = 0x40
 		buffLen++
 
 		err := dev.i2c.Write(buffer[:], buffLen)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s (%d bytes)", err, buffLen)
 		}
 	}
 

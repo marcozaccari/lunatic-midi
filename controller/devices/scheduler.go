@@ -18,8 +18,6 @@ type Scheduler struct {
 
 	chans events.Channels
 
-	sleepLatency_us int
-
 	stopChan chan struct{}
 }
 
@@ -42,7 +40,6 @@ func NewScheduler(cfg config.Devices, velocityPath string, chans events.Channels
 		return nil, err
 	}
 
-	s.calcSleepLatency()
 	s.calcTasksList()
 
 	return s, nil
@@ -70,38 +67,30 @@ func (s *Scheduler) Work() {
 	s.stopChan = make(chan struct{})
 	defer close(s.stopChan)
 
+	ticker := time.NewTicker(time.Microsecond * TimeSlices_us)
+	defer ticker.Stop()
+
+	curTask := -1
+
 	for {
 		select {
 		case <-s.stopChan:
 			return
-		default:
-			for _, dev := range s.devices {
-				hardware.DebugLedOn()
 
-				start := time.Now()
+		case <-ticker.C:
+			hardware.DebugLedOn()
 
-				//logs.Tracef("get device %s", dev)
-				err := dev.Work()
-				if err != nil {
-					logs.Errorf("device %s error: %s", dev, err)
-				}
+			curTask = (curTask + 1) % len(s.tasks)
 
-				// Measure elapsed time of current task
-				// and calculate remaining waiting time
-				// in order to complete current time window.
-				duration := time.Since(start)
-				remainder_us := TimeSlices_us - int(duration.Microseconds()) - s.sleepLatency_us
+			dev := s.tasks[curTask]
+			//logs.Tracef("get device %s", dev)
 
-				//logs.Tracef("need to sleep %d us", remainder_us)
-
-				if remainder_us > 0 {
-					hardware.DebugLedOff()
-					time.Sleep(time.Microsecond * time.Duration(remainder_us))
-				}
-
-				hardware.DebugLedOn()
-				hardware.DebugLedOff()
+			err := dev.Work()
+			if err != nil {
+				logs.Errorf("device %s error: %s", dev, err)
 			}
+
+			hardware.DebugLedOff()
 		}
 	}
 }
@@ -125,23 +114,6 @@ func (s *Scheduler) calcTasksList() {
 		desc += task.String() + " "
 	}
 	logs.Info(desc)
-}
-
-func (s *Scheduler) calcSleepLatency() {
-	tests := 100
-
-	start := time.Now()
-
-	for k := 0; k < tests; k++ {
-		time.Sleep(time.Microsecond * 1000)
-	}
-
-	duration := time.Since(start)
-	elapsedUs := int(duration.Microseconds())
-
-	s.sleepLatency_us = (elapsedUs - tests*1000) / tests
-
-	logs.Infof("usleep() latency = %dus", s.sleepLatency_us)
 }
 
 func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error {
