@@ -193,6 +193,38 @@ func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error 
 			return err
 		}
 
+		stype := cfg.Analog.Channel1
+		switch stype {
+		case "slider":
+			ana.SetChannelType(0, AnalogChannelSlider)
+		case "ribbon":
+			ana.SetChannelType(0, AnalogChannelRibbon)
+		}
+
+		stype = cfg.Analog.Channel2
+		switch stype {
+		case "slider":
+			ana.SetChannelType(1, AnalogChannelSlider)
+		case "ribbon":
+			ana.SetChannelType(1, AnalogChannelRibbon)
+		}
+
+		stype = cfg.Analog.Channel3
+		switch stype {
+		case "slider":
+			ana.SetChannelType(2, AnalogChannelSlider)
+		case "ribbon":
+			ana.SetChannelType(2, AnalogChannelRibbon)
+		}
+
+		stype = cfg.Analog.Channel4
+		switch stype {
+		case "slider":
+			ana.SetChannelType(3, AnalogChannelSlider)
+		case "ribbon":
+			ana.SetChannelType(3, AnalogChannelRibbon)
+		}
+
 		s.devices = append(s.devices, ana)
 
 		logs.Infof("Analog initialized (%s)", cfg.Analog.I2C)

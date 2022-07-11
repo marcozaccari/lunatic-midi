@@ -1,6 +1,8 @@
 package devices
 
 import (
+	"time"
+
 	"github.com/marcozaccari/lunatic-midi/events"
 )
 
@@ -39,26 +41,10 @@ func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, e
 	}
 
 	for i := 0; i < AnalogChannels; i++ {
-		dev.lastValues[i] = 0
+		dev.lastValues[i] = -1
 	}
 
 	dev.continousSampling = false
-
-	// TODO
-	err = dev.writeConfig(analogConfig{
-		Channel:            0,
-		Reference:          0,
-		Gain:               0,
-		Speed:              0,
-		ConversionMode:     CONV_CONTINOUS,
-		Comparator:         COMP_TRADITIONAL,
-		ComparatorPolarity: COMP_POL_HIGH,
-		ComparatorLatching: COMP_LAT_OFF,
-		ComparatorQueue:    COMP_QUEUE_OFF,
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	return dev, nil
 }
@@ -75,19 +61,19 @@ func (dev *AnalogDevice) Work() error {
 	var event events.Analog
 
 	for channel := 0; channel < AnalogChannels; channel++ {
-		event.Channel = channel
-
-		ui16, err := dev.readSample()
+		ui16, err := dev.readSample(channel)
 		if err != nil {
 			return err
 		}
 
-		event.Value = int(ui16)
-
-		if dev.lastValues[event.Channel] != event.Value {
-			dev.lastValues[event.Channel] = event.Value
-
-			dev.events <- event
+		if dev.lastValues[channel] != int(ui16) {
+			if dev.lastValues[channel] >= 0 {
+				dev.events <- events.Analog{
+					Channel: channel,
+					Value:   int(ui16),
+				}
+			}
+			dev.lastValues[channel] = event.Value
 		}
 	}
 
@@ -98,7 +84,47 @@ const (
 	ADS_realBits = 12
 )
 
-func (dev *AnalogDevice) readSample() (uint16, error) {
+func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
+	var cfg analogConfig
+
+	if dev.channelsType[channel] == AnalogChannelSlider {
+		// Slider
+		// TODO
+		cfg = analogConfig{
+			Channel:            ConfigChannels[channel],
+			Reference:          REF_GND,
+			Gain:               GAIN_4V,
+			Speed:              SPS_250,
+			ConversionMode:     CONV_ONESHOT,
+			Comparator:         COMP_TRADITIONAL,
+			ComparatorPolarity: COMP_POL_HIGH,
+			ComparatorLatching: COMP_LAT_OFF,
+			ComparatorQueue:    COMP_QUEUE_OFF,
+		}
+	} else {
+		// Ribbon
+		// TODO
+		cfg = analogConfig{
+			Channel:            ConfigChannels[channel],
+			Reference:          REF_GND,
+			Gain:               GAIN_4V,
+			Speed:              SPS_250,
+			ConversionMode:     CONV_ONESHOT,
+			Comparator:         COMP_TRADITIONAL,
+			ComparatorPolarity: COMP_POL_HIGH,
+			ComparatorLatching: COMP_LAT_OFF,
+			ComparatorQueue:    COMP_QUEUE_OFF,
+		}
+	}
+
+	err := dev.writeConfig(cfg)
+	if err != nil {
+		return 0, err
+	}
+
+	// TODO
+	time.Sleep(time.Microsecond * 50)
+
 	buffer := [2]byte{0, 0}
 
 	if !dev.continousSampling {
@@ -109,7 +135,7 @@ func (dev *AnalogDevice) readSample() (uint16, error) {
 		}
 	}
 
-	err := dev.i2c.Read(buffer[:], 2)
+	err = dev.i2c.Read(buffer[:], 2)
 	if err != nil {
 		return 0, err
 	}
@@ -122,11 +148,13 @@ func (dev *AnalogDevice) readSample() (uint16, error) {
 type ConfigChannel byte
 
 const (
-	CH_AIN0 = 0
-	CH_AIN1 = 0x10
-	CH_AIN2 = 0x20
-	CH_AIN3 = 0x30
+	CH_AIN0 = 0x40
+	CH_AIN1 = 0x50
+	CH_AIN2 = 0x60
+	CH_AIN3 = 0x70
 )
+
+var ConfigChannels [4]ConfigChannel = [4]ConfigChannel{CH_AIN0, CH_AIN1, CH_AIN2, CH_AIN3}
 
 type ConfigReference byte
 
