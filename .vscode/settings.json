@@ -1,24 +1,3 @@
 {
-    "files.associations": {
-        "errno.h": "c",
-        "string.h": "c",
-        "unistd.h": "c",
-        "malloc.h": "c",
-        "wait.h": "c",
-        "utils.h": "c",
-        "globals.h": "c",
-        "threads.h": "c",
-        "main.settings.h": "c",
-        "log.h": "c",
-        "file.h": "c",
-        "stdio.h": "c",
-        "stdlib.h": "c",
-        "signal.h": "c",
-        "console.h": "c",
-        "exceptions.h": "c",
-        "cerrno": "c",
-        "time.h": "c",
-        "inttypes.h": "c",
-        "stdbool.h": "c"
-    }
+    "cmake.configureOnOpen": false
 }

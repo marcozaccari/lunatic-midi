@@ -1,0 +1,88 @@
+{
+	"MIDI": {
+		// string - Get ports names using "amidi -l" or "lunatic-midi midiports"
+		// In order to obtain virtual ports, use:
+		//   "sudo modprobe snd-virmidi" or
+		//   "sudo echo 'snd-virmidi' >> /etc/modules" or
+		//   "sudo echo 'snd-virmidi index=n' >> /etc/modprobe.d/snd-virmidi.conf"
+		// 
+		// Raspberry Zero: "hw:2,0,0"
+		"PortName": "hw:0,0,0"
+	},
+	"Devices": {
+		"Keyboards": [
+			{
+				// string - I2C address (ex "0x30")
+				"I2C": "",
+				// int - Notes offset
+				"Offset": 0,
+				// string - Velocity curve (data/velocity/*.dat)
+				"Velocity": ""
+			}
+		],
+		"Buttons": {
+			// string - I2C address (ex "0x30")
+			"I2C": ""
+		},
+		"Analog": {
+			// string
+			"I2C": "",
+			"Channels": [
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				},
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				},
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				},
+				{
+					// string - Channel type: "slider" / "ribbon"
+					"Type": "",
+					// int
+					"Bits": 0,
+					// int
+					"RawMin": 0,
+					// int
+					"RawMax": 0
+				}
+			]
+		},
+		"LedStrip": {
+			// string - I2C address (ex "0x30")
+			"I2C": ""
+		}
+	},
+	"Logging": {
+		// int - 0 = disabled
+		"TCPPort": 0,
+		// string
+		"File": "",
+		// bool
+		"Stdout": false,
+		// bool
+		"Syslog": false
+	}
+}

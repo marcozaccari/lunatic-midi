@@ -1,12 +1,1 @@
-# Ignore all
-*
-
-# Unignore all with extensions
-!*.*
-
-# Unignore all dirs
-!*/
-
-*.o
-/build/
-/logs/log.txt
+doc/todo
