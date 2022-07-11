@@ -46,7 +46,18 @@ func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, e
 
 	dev.continousSampling = false
 
+	err = dev.reset()
+	if err != nil {
+		return nil, err
+	}
+
 	return dev, nil
+}
+
+// Reset device
+func (dev *AnalogDevice) reset() error {
+	buffer := [1]byte{0x06}
+	return dev.i2c.Write(buffer[:], 1)
 }
 
 func (dev *AnalogDevice) Done() {
@@ -58,22 +69,20 @@ func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType) {
 }
 
 func (dev *AnalogDevice) Work() error {
-	var event events.Analog
-
 	for channel := 0; channel < AnalogChannels; channel++ {
-		ui16, err := dev.readSample(channel)
+		i16, err := dev.readSample(channel)
 		if err != nil {
 			return err
 		}
 
-		if dev.lastValues[channel] != int(ui16) {
+		if dev.lastValues[channel] != int(i16) {
 			if dev.lastValues[channel] >= 0 {
 				dev.events <- events.Analog{
 					Channel: channel,
-					Value:   int(ui16),
+					Value:   int(i16),
 				}
 			}
-			dev.lastValues[channel] = event.Value
+			dev.lastValues[channel] = int(i16)
 		}
 	}
 
@@ -84,7 +93,17 @@ const (
 	ADS_realBits = 12
 )
 
-func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
+func (dev *AnalogDevice) readSample(channel int) (int16, error) {
+	//time.Sleep(time.Millisecond * 4)
+	//return 0, nil
+
+	var err error
+
+	/*err = dev.reset()
+	if err != nil {
+		return 0, err
+	}*/
+
 	var cfg analogConfig
 
 	if dev.channelsType[channel] == AnalogChannelSlider {
@@ -92,9 +111,8 @@ func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
 		// TODO
 		cfg = analogConfig{
 			Channel:            ConfigChannels[channel],
-			Reference:          REF_GND,
 			Gain:               GAIN_4V,
-			Speed:              SPS_250,
+			Speed:              SPS_475,
 			ConversionMode:     CONV_ONESHOT,
 			Comparator:         COMP_TRADITIONAL,
 			ComparatorPolarity: COMP_POL_HIGH,
@@ -106,9 +124,8 @@ func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
 		// TODO
 		cfg = analogConfig{
 			Channel:            ConfigChannels[channel],
-			Reference:          REF_GND,
 			Gain:               GAIN_4V,
-			Speed:              SPS_250,
+			Speed:              SPS_475,
 			ConversionMode:     CONV_ONESHOT,
 			Comparator:         COMP_TRADITIONAL,
 			ComparatorPolarity: COMP_POL_HIGH,
@@ -117,13 +134,13 @@ func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
 		}
 	}
 
-	err := dev.writeConfig(cfg)
+	err = dev.writeConfig(cfg)
 	if err != nil {
 		return 0, err
 	}
 
 	// TODO
-	time.Sleep(time.Microsecond * 50)
+	time.Sleep(time.Millisecond * 4)
 
 	buffer := [2]byte{0, 0}
 
@@ -140,14 +157,19 @@ func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
 		return 0, err
 	}
 
-	val := uint16(buffer[0])<<8 | uint16(buffer[1])
+	val := int16(buffer[0])<<8 | int16(buffer[1]&0xF0)
+	if val < 0 {
+		val = 0
+	}
 
-	return (val >> (15 - ADS_realBits)), nil
+	return val, nil
+	//return (val >> (15 - ADS_realBits)), nil
 }
 
 type ConfigChannel byte
 
 const (
+	// Not differential channels
 	CH_AIN0 = 0x40
 	CH_AIN1 = 0x50
 	CH_AIN2 = 0x60
@@ -155,13 +177,6 @@ const (
 )
 
 var ConfigChannels [4]ConfigChannel = [4]ConfigChannel{CH_AIN0, CH_AIN1, CH_AIN2, CH_AIN3}
-
-type ConfigReference byte
-
-const (
-	REF_GND  = 0    // not differential
-	REF_AIN3 = 0x40 // differential
-)
 
 type ConfigGain byte
 
@@ -182,8 +197,8 @@ const (
 	SPS_32  = 0x40
 	SPS_64  = 0x60
 	SPS_128 = 0x80
-	SPS_250 = 0xA0
-	SPS_475 = 0xC0
+	SPS_250 = 0xA0 // 4ms
+	SPS_475 = 0xC0 // 2ms
 	SPS_860 = 0xE0
 )
 
@@ -226,7 +241,6 @@ const (
 
 type analogConfig struct {
 	Channel            ConfigChannel
-	Reference          ConfigReference
 	Gain               ConfigGain
 	Speed              ConfigSpeed
 	ConversionMode     ConfigConversionMode
@@ -240,10 +254,8 @@ func (dev *AnalogDevice) writeConfig(config analogConfig) error {
 	var buffer [3]byte
 
 	buffer[0] = 1 // write to config register
-	buffer[1] = byte(config.Reference) |
-		byte(config.Channel) |
+	buffer[1] = byte(config.Channel) |
 		byte(config.Gain) |
-		byte(config.Speed) |
 		byte(config.ConversionMode)
 	buffer[2] = byte(config.Speed) |
 		byte(config.Comparator) |
@@ -271,6 +283,8 @@ func (dev *AnalogDevice) writeConfig(config analogConfig) error {
 			return err
 		}
 	}
+
+	//logs.Tracef("analog: config: %x %x = %x", buffer[1], buffer[2], config)
 
 	return nil
 }
