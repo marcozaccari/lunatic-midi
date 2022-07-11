@@ -15,31 +15,30 @@
 		},
 		"Analog": {
 			"I2C": "0x48",
-
 			"Channels": [
-				{ 
+				{
 					"Type": "slider",
-					"Bits": 9,
-					"RawMin": 0,
-					"RawMax": 10240
+					"Bits": 10,
+					"RawMin": 42,
+					"RawMax": 374
 				},
-				{ 
+				{
 					"Type": "slider",
-					"Bits": 9,
+					"Bits": 10,
 					"RawMin": 0,
-					"RawMax": 10240
+					"RawMax": 374
 				},
-				{ 
+				{
 					"Type": "slider",
-					"Bits": 9,
+					"Bits": 10,
 					"RawMin": 0,
-					"RawMax": 10240
+					"RawMax": 374
 				},
-				{ 
+				{
 					"Type": "ribbon",
-					"Bits": 8,
+					"Bits": 11,
 					"RawMin": 0,
-					"RawMax": 10240
+					"RawMax": 480
 				}
 			]
 		},

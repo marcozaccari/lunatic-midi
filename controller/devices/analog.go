@@ -1,6 +1,7 @@
 package devices
 
 import (
+	"math"
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/events"
@@ -57,7 +58,7 @@ func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, e
 	}
 
 	for i := 0; i < AnalogChannels; i++ {
-		dev.channels[i].lastValue = -1
+		dev.channels[i].lastValue = -100
 	}
 
 	dev.continousSampling = false
@@ -94,7 +95,7 @@ func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType, bits int
 		rawMax:  rawMax,
 	}
 
-	logs.Info("Set channel %d: %v", channel, dev.channels[channel])
+	logs.Infof("Set channel %d: %+v", channel, dev.channels[channel])
 }
 
 func (dev *AnalogDevice) Work() error {
@@ -110,7 +111,7 @@ func (dev *AnalogDevice) Work() error {
 		return nil
 	}
 	dev.curChannel = curCh
-	channel := dev.channels[curCh]
+	channel := &dev.channels[curCh]
 
 	ui16, err := dev.readSample(curCh)
 	if err != nil {
@@ -118,24 +119,36 @@ func (dev *AnalogDevice) Work() error {
 	}
 
 	ui16 >>= (16 - channel.bits)
-	if uint(ui16) > channel.rawMax {
+	sample := int(ui16)
+
+	if uint(sample) >= channel.rawMax {
 		if dev.channels[curCh].typ == AnalogChannelRibbon {
-			ui16 = 0
+			sample = -1
 		} else {
-			ui16 = uint16(channel.rawMax)
+			sample = int(channel.rawMax)
 		}
-	} else if uint(ui16) < channel.rawMin {
-		ui16 = uint16(channel.rawMin)
+	} else if uint(sample) < channel.rawMin {
+		sample = int(channel.rawMin)
 	}
 
-	if channel.lastValue != int(ui16) {
-		if channel.lastValue >= 0 {
+	// 0-127 or 0-512
+	var max float32 = 127 // Slider
+	if dev.channels[curCh].typ == AnalogChannelRibbon {
+		max = 512
+	}
+	value := sample - int(channel.rawMin)
+	value = int(math.Round(float64(float32(value) * max / float32(channel.rawMax-channel.rawMin))))
+
+	if channel.lastValue != sample {
+		if channel.lastValue >= -1 {
 			dev.events <- events.Analog{
 				Channel: curCh,
-				Value:   int(ui16),
+				Type:    int(channel.typ),
+				Value:   value,
+				Raw:     sample,
 			}
 		}
-		channel.lastValue = int(ui16)
+		channel.lastValue = sample
 	}
 
 	dev.curChannel = (dev.curChannel + 1) % AnalogChannels

@@ -15,7 +15,9 @@ type Keyboard struct {
 
 type Analog struct {
 	Channel int
+	Type    int
 	Value   int
+	Raw     int
 }
 
 type MIDI struct {
