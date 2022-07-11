@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"time"
 
 	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
@@ -12,6 +13,8 @@ import (
 const (
 	MaxKeyboardKeys   = 128
 	MaxKeyboardEvents = 64
+
+	ReadKeyboardEveryUs = 400 // 300us lag (velocity on+off)
 )
 
 type KeyboardDevice struct {
@@ -19,6 +22,8 @@ type KeyboardDevice struct {
 
 	keyOffset      int
 	velocityLookup []byte
+
+	lastRead time.Time
 
 	lastState [MaxKeyboardKeys]bool
 	lastKey   events.Keyboard
@@ -63,6 +68,12 @@ func (dev *KeyboardDevice) Done() {
 }
 
 func (dev *KeyboardDevice) Work() error {
+	if time.Since(dev.lastRead).Microseconds() < ReadKeyboardEveryUs {
+		//logs.Trace("keyboard: too early")
+		return nil
+	}
+	dev.lastRead = time.Now()
+
 	var buffer [256]byte
 	var size int
 

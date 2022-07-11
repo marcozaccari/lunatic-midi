@@ -4,10 +4,13 @@ import (
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/events"
+	"github.com/modulo-srl/sparalog/logs"
 )
 
 const (
 	AnalogChannels = 4
+
+	ReadADCEveryUs = 1500 // SPS_860 = 1,2ms + 20us reboot time
 )
 
 type ChannelType int
@@ -26,6 +29,10 @@ type AnalogDevice struct {
 
 	lastValues        [AnalogChannels]int
 	continousSampling bool
+
+	curChannel int
+
+	lastRead time.Time
 }
 
 func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, error) {
@@ -51,6 +58,11 @@ func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, e
 		return nil, err
 	}
 
+	err = dev.setChannel(dev.curChannel)
+	if err != nil {
+		return nil, err
+	}
+
 	return dev, nil
 }
 
@@ -69,22 +81,36 @@ func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType) {
 }
 
 func (dev *AnalogDevice) Work() error {
-	for channel := 0; channel < AnalogChannels; channel++ {
-		i16, err := dev.readSample(channel)
-		if err != nil {
-			return err
-		}
+	if time.Since(dev.lastRead).Microseconds() < ReadADCEveryUs {
+		logs.Trace("adc: too early")
+		return nil
+	}
+	dev.lastRead = time.Now()
 
-		if dev.lastValues[channel] != int(i16) {
-			if dev.lastValues[channel] >= 0 {
-				dev.events <- events.Analog{
-					Channel: channel,
-					Value:   int(i16),
-				}
-			}
-			dev.lastValues[channel] = int(i16)
+	ui16, err := dev.readSample(dev.curChannel)
+	if err != nil {
+		return err
+	}
+
+	if dev.channelsType[dev.curChannel] == AnalogChannelRibbon {
+		ui16 >>= 1
+		if ui16 > 500 {
+			ui16 = 0
 		}
 	}
+
+	if dev.lastValues[dev.curChannel] != int(ui16) {
+		if dev.lastValues[dev.curChannel] >= 0 {
+			dev.events <- events.Analog{
+				Channel: dev.curChannel,
+				Value:   int(ui16),
+			}
+		}
+		dev.lastValues[dev.curChannel] = int(ui16)
+	}
+
+	dev.curChannel = (dev.curChannel + 1) % AnalogChannels
+	dev.setChannel(dev.curChannel)
 
 	return nil
 }
@@ -93,15 +119,10 @@ const (
 	ADS_realBits = 12
 )
 
-func (dev *AnalogDevice) readSample(channel int) (int16, error) {
-	//time.Sleep(time.Millisecond * 4)
-	//return 0, nil
-
-	var err error
-
-	/*err = dev.reset()
+func (dev *AnalogDevice) setChannel(channel int) error {
+	/*err := dev.reset()
 	if err != nil {
-		return 0, err
+		return err
 	}*/
 
 	var cfg analogConfig
@@ -112,7 +133,7 @@ func (dev *AnalogDevice) readSample(channel int) (int16, error) {
 		cfg = analogConfig{
 			Channel:            ConfigChannels[channel],
 			Gain:               GAIN_4V,
-			Speed:              SPS_475,
+			Speed:              SPS_860,
 			ConversionMode:     CONV_ONESHOT,
 			Comparator:         COMP_TRADITIONAL,
 			ComparatorPolarity: COMP_POL_HIGH,
@@ -125,7 +146,7 @@ func (dev *AnalogDevice) readSample(channel int) (int16, error) {
 		cfg = analogConfig{
 			Channel:            ConfigChannels[channel],
 			Gain:               GAIN_4V,
-			Speed:              SPS_475,
+			Speed:              SPS_860,
 			ConversionMode:     CONV_ONESHOT,
 			Comparator:         COMP_TRADITIONAL,
 			ComparatorPolarity: COMP_POL_HIGH,
@@ -134,14 +155,10 @@ func (dev *AnalogDevice) readSample(channel int) (int16, error) {
 		}
 	}
 
-	err = dev.writeConfig(cfg)
-	if err != nil {
-		return 0, err
-	}
+	return dev.writeConfig(cfg)
+}
 
-	// TODO
-	time.Sleep(time.Millisecond * 4)
-
+func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
 	buffer := [2]byte{0, 0}
 
 	if !dev.continousSampling {
@@ -152,18 +169,17 @@ func (dev *AnalogDevice) readSample(channel int) (int16, error) {
 		}
 	}
 
-	err = dev.i2c.Read(buffer[:], 2)
+	err := dev.i2c.Read(buffer[:], 2)
 	if err != nil {
 		return 0, err
 	}
 
-	val := int16(buffer[0])<<8 | int16(buffer[1]&0xF0)
+	val := int16(buffer[0])<<8 | int16(buffer[1])
 	if val < 0 {
 		val = 0
 	}
 
-	return val, nil
-	//return (val >> (15 - ADS_realBits)), nil
+	return uint16(uint16(val) >> (16 - ADS_realBits)), nil
 }
 
 type ConfigChannel byte
@@ -196,10 +212,10 @@ const (
 	SPS_16  = 0x20
 	SPS_32  = 0x40
 	SPS_64  = 0x60
-	SPS_128 = 0x80
+	SPS_128 = 0x80 // 7,82ms
 	SPS_250 = 0xA0 // 4ms
-	SPS_475 = 0xC0 // 2ms
-	SPS_860 = 0xE0
+	SPS_475 = 0xC0 // 2,11ms
+	SPS_860 = 0xE0 // 1,17ms
 )
 
 type ConfigConversionMode byte

@@ -10,6 +10,9 @@ const (
 	LedCount = 60
 
 	MaxSendBytesPerLoop = 16 // 16*8*2.5 = 320us
+
+	LedsWritesDelayMs = 3 // needs a delay of 2.5ms after every update
+
 )
 
 type LedColor byte
@@ -32,6 +35,8 @@ type LedStripDevice struct {
 	framebuffer,
 
 	framebufferLast [LedCount]LedColor
+
+	nextWrite time.Time
 }
 
 func NewLedStrip(i2cAddr byte) (*LedStripDevice, error) {
@@ -64,6 +69,11 @@ func (dev *LedStripDevice) Done() {
 }
 
 func (dev *LedStripDevice) Work() error {
+	if time.Now().Before(dev.nextWrite) {
+		//logs.Trace("leds: too early")
+		return nil
+	}
+
 	var buffer [256]byte
 	var buffLen int
 
@@ -90,6 +100,8 @@ func (dev *LedStripDevice) Work() error {
 		// add repaint command
 		buffer[buffLen] = 0x40
 		buffLen++
+
+		dev.nextWrite = time.Now().Add(time.Millisecond * LedsWritesDelayMs)
 
 		err := dev.i2c.Write(buffer[:], buffLen)
 		if err != nil {

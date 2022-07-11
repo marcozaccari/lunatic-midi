@@ -1,6 +1,8 @@
 package devices
 
 import (
+	"time"
+
 	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
@@ -8,12 +10,16 @@ import (
 const (
 	MaxButtons       = 128
 	MaxButtonsEvents = 32
+
+	ReadButtonsEveryMs = 10 // 7ms antibounce lag
 )
 
 type ButtonsDevice struct {
 	Device
 
 	lastState [MaxButtons]bool
+
+	lastRead time.Time
 
 	events events.Channel[events.Buttons]
 }
@@ -45,6 +51,12 @@ func (dev *ButtonsDevice) Done() {
 }
 
 func (dev *ButtonsDevice) Work() error {
+	if time.Since(dev.lastRead).Milliseconds() < ReadButtonsEveryMs {
+		//logs.Trace("buttons: too early")
+		return nil
+	}
+	dev.lastRead = time.Now()
+
 	var buffer [256]byte
 	var size int
 	var b byte

@@ -12,7 +12,6 @@ import (
 
 type Scheduler struct {
 	devices []deviceInt
-	tasks   []deviceInt
 
 	leds *LedStripDevice
 
@@ -31,7 +30,6 @@ type deviceInt interface {
 func NewScheduler(cfg config.Devices, velocityPath string, chans events.Channels) (*Scheduler, error) {
 	s := &Scheduler{
 		devices: make([]deviceInt, 0, 8),
-		tasks:   make([]deviceInt, 0, 16),
 		chans:   chans,
 	}
 
@@ -39,8 +37,6 @@ func NewScheduler(cfg config.Devices, velocityPath string, chans events.Channels
 	if err != nil {
 		return nil, err
 	}
-
-	s.calcTasksList()
 
 	return s, nil
 }
@@ -56,11 +52,6 @@ func (s *Scheduler) Stop() {
 const (
 	// Time window for every task
 	TimeSlices_us = 500
-
-	KeyboardPriority = 500  // 300us lag (velocity on,off)
-	ButtonsPriority  = 7000 // 7ms antibounce lag
-	AdcPriority      = 500
-	LedStripPriority = 2500 // needs a delay of 2.5ms after every update
 )
 
 func (s *Scheduler) Work() {
@@ -70,7 +61,7 @@ func (s *Scheduler) Work() {
 	ticker := time.NewTicker(time.Microsecond * TimeSlices_us)
 	defer ticker.Stop()
 
-	curTask := -1
+	curDev := -1
 
 	for {
 		select {
@@ -80,9 +71,9 @@ func (s *Scheduler) Work() {
 		case <-ticker.C:
 			hardware.DebugLedOn()
 
-			curTask = (curTask + 1) % len(s.tasks)
+			curDev = (curDev + 1) % len(s.devices)
 
-			dev := s.tasks[curTask]
+			dev := s.devices[curDev]
 			//logs.Tracef("get device %s", dev)
 
 			err := dev.Work()
@@ -93,27 +84,6 @@ func (s *Scheduler) Work() {
 			hardware.DebugLedOff()
 		}
 	}
-}
-
-// TODO gestire bene le priorità
-func (s *Scheduler) calcTasksList() {
-	for _, dev := range s.devices {
-		if dev.GetType() == DeviceKeyboard {
-			s.tasks = append(s.tasks, dev)
-		}
-	}
-
-	for _, dev := range s.devices {
-		if dev.GetType() != DeviceKeyboard {
-			s.tasks = append(s.tasks, dev)
-		}
-	}
-
-	desc := "Scheduler tasks: "
-	for _, task := range s.tasks {
-		desc += task.String() + " "
-	}
-	logs.Info(desc)
 }
 
 func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error {
