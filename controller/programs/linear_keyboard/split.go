@@ -25,7 +25,7 @@ func (p *Program) getSplit() {
 				p.leds.BlinkAll(devices.LedRed, 2, time.Millisecond*100, time.Millisecond*100)
 				p.leds.BlinkAll(devices.LedViolet, 1, time.Millisecond*500, 0)
 			} else {
-				p.splitKey = ev.Key - 1
+				p.splitKey = ev.Key
 
 				p.leds.Blink(p.splitKey, devices.LedRed, 2, time.Millisecond*100, time.Millisecond*100)
 				p.leds.Blink(p.splitKey, devices.LedViolet, 1, time.Millisecond*500, 0)

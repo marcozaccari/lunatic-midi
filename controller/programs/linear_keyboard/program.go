@@ -52,9 +52,9 @@ func (p *Program) Work() {
 			p.midi.SendKey(byte(ch), byte(ev.Key), ev.State, ev.Velocity)
 
 			if ev.State {
-				p.leds.Set(ev.Key-1, col)
+				p.leds.Set(ev.Key, col)
 			} else {
-				p.leds.Set(ev.Key-1, devices.LedOff)
+				p.leds.Set(ev.Key, devices.LedOff)
 			}
 
 		case ev := <-p.chans.Analog:
@@ -80,7 +80,7 @@ func (p *Program) Work() {
 		case ev := <-p.chans.Buttons:
 			logs.Tracef("buttons event: %v", ev)
 
-			if ev.Button == 95 && ev.State {
+			if ev.Button == 96 && ev.State {
 				// Split
 				p.getSplit()
 			}

@@ -67,6 +67,8 @@ type AnalogChannel struct {
 
 type DeviceLedStrip struct {
 	I2C string // I2C address (ex "0x30")
+
+	Offset int
 }
 
 func ConfigDefaults() *Config {

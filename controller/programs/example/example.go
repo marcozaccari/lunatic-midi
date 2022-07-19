@@ -43,9 +43,9 @@ func (p *Program) Work() {
 			p.midi.SendKey(0, byte(ev.Key), ev.State, ev.Velocity)
 
 			if ev.State {
-				p.leds.Set(ev.Key-1, devices.LedRed)
+				p.leds.Set(ev.Key, devices.LedRed)
 			} else {
-				p.leds.Set(ev.Key-1, devices.LedOff)
+				p.leds.Set(ev.Key, devices.LedOff)
 			}
 
 		case ev := <-p.chans.Analog:

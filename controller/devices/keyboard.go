@@ -116,7 +116,7 @@ func (dev *KeyboardDevice) parse(b byte) {
 		keyAbs = (b & 0x3F)
 		key = int(keyAbs) + dev.keyOffset
 
-		dev.lastKey.Key = key
+		dev.lastKey.Key = key + 1 // 1..MaxKeys
 
 		if keyOn {
 			dev.lastKey.State = true

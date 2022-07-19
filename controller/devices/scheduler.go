@@ -168,7 +168,7 @@ func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error 
 			return err
 		}
 
-		leds, err := NewLedStrip(byte(addr))
+		leds, err := NewLedStrip(byte(addr), cfg.LedStrip.Offset)
 		if err != nil {
 			return err
 		}

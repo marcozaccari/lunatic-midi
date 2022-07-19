@@ -1,5 +1,7 @@
 package devices
 
+// TODO set lights
+
 import (
 	"time"
 
@@ -83,14 +85,11 @@ func (dev *ButtonsDevice) Work() (bool, error) {
 
 			if (b & 0x80) == 0x80 {
 				event.State = true
-
 				b = b & 0x7F
-				event.Button = int(b)
 			} else {
 				event.State = false
-
-				event.Button = int(b)
 			}
+			event.Button = int(b) + 1 // 1..MaxButtons
 
 			if dev.lastState[event.Button] == event.State {
 				// Firmware or hardware error

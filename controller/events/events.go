@@ -1,14 +1,14 @@
 package events
 
 type Buttons struct {
-	Button int
+	Button int // 1..MaxButtons
 	State  bool
 }
 
 type Keyboard struct {
 	KeyboardNum int
 
-	Key      int
+	Key      int // 1..MaxKeys
 	State    bool
 	Velocity byte
 }

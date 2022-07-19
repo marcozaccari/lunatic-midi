@@ -31,6 +31,8 @@ const (
 type LedStripDevice struct {
 	Device
 
+	offset int
+
 	mu sync.RWMutex
 	framebuffer,
 
@@ -39,8 +41,10 @@ type LedStripDevice struct {
 	nextWrite time.Time
 }
 
-func NewLedStrip(i2cAddr byte) (*LedStripDevice, error) {
-	dev := &LedStripDevice{}
+func NewLedStrip(i2cAddr byte, offset int) (*LedStripDevice, error) {
+	dev := &LedStripDevice{
+		offset: offset,
+	}
 
 	dev.Device.Type = DeviceLedStrip
 
@@ -125,6 +129,8 @@ func (dev *LedStripDevice) Fill(color LedColor) {
 func (dev *LedStripDevice) Set(index int, color LedColor) {
 	dev.mu.Lock()
 	defer dev.mu.Unlock()
+
+	index = index - 1 - dev.offset
 
 	if index < 0 || index >= LedCount {
 		return
