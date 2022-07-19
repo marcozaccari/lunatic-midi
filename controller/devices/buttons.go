@@ -50,10 +50,10 @@ func (dev *ButtonsDevice) Done() {
 	dev.i2c.Close()
 }
 
-func (dev *ButtonsDevice) Work() error {
+func (dev *ButtonsDevice) Work() (bool, error) {
 	if time.Since(dev.lastRead).Milliseconds() < ReadButtonsEveryMs {
 		//logs.Trace("buttons: too early")
-		return nil
+		return false, nil
 	}
 	dev.lastRead = time.Now()
 
@@ -64,17 +64,17 @@ func (dev *ButtonsDevice) Work() error {
 
 	err := dev.i2c.Read(buffer[:], 1)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	size = int(buffer[0])
 	if size == 0 {
-		return nil
+		return true, nil
 	}
 
 	err = dev.i2c.Read(buffer[:], size+1)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	for k := 1; k < size+1; k++ {
@@ -103,5 +103,5 @@ func (dev *ButtonsDevice) Work() error {
 		}
 	}
 
-	return nil
+	return true, nil
 }

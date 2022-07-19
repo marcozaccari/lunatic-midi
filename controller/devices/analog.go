@@ -98,24 +98,27 @@ func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType, bits int
 	logs.Infof("Set channel %d: %+v", channel, dev.channels[channel])
 }
 
-func (dev *AnalogDevice) Work() error {
+func (dev *AnalogDevice) Work() (bool, error) {
 	if time.Since(dev.lastRead).Microseconds() < ReadADCEveryUs {
-		logs.Trace("adc: too early")
-		return nil
+		//logs.Trace("adc: too early")
+		return false, nil
 	}
-	dev.lastRead = time.Now()
+
+	defer func() {
+		dev.lastRead = time.Now()
+	}()
 
 	curCh := dev.getNextEnabledChannelNum()
 	if curCh == -1 {
 		// All channels disabled
-		return nil
+		return false, nil
 	}
 	dev.curChannel = curCh
 	channel := &dev.channels[curCh]
 
 	ui16, err := dev.readSample(curCh)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	ui16 >>= (16 - channel.bits)
@@ -155,7 +158,7 @@ func (dev *AnalogDevice) Work() error {
 	dev.curChannel = dev.getNextEnabledChannelNum()
 	dev.setChannel(dev.curChannel)
 
-	return nil
+	return true, nil
 }
 
 // Find next enabled channel

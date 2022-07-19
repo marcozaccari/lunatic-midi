@@ -67,10 +67,10 @@ func (dev *KeyboardDevice) Done() {
 	dev.i2c.Close()
 }
 
-func (dev *KeyboardDevice) Work() error {
+func (dev *KeyboardDevice) Work() (bool, error) {
 	if time.Since(dev.lastRead).Microseconds() < ReadKeyboardEveryUs {
 		//logs.Trace("keyboard: too early")
-		return nil
+		return false, nil
 	}
 	dev.lastRead = time.Now()
 
@@ -79,19 +79,19 @@ func (dev *KeyboardDevice) Work() error {
 
 	err := dev.i2c.Read(buffer[:], 1)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	size = int(buffer[0])
 	if size == 0 {
-		return nil
+		return true, nil
 	}
 
 	//logs.Tracef("keyboard received %d bytes", size)
 
 	err = dev.i2c.Read(buffer[:], size+1)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	for k := 1; k < size+1; k++ {
@@ -100,7 +100,7 @@ func (dev *KeyboardDevice) Work() error {
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 func (dev *KeyboardDevice) parse(b byte) {

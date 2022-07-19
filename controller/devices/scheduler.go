@@ -21,7 +21,7 @@ type Scheduler struct {
 }
 
 type deviceInt interface {
-	Work() error
+	Work() (bool, error)
 	GetType() DeviceType
 	Done()
 	String() string
@@ -71,14 +71,21 @@ func (s *Scheduler) Work() {
 		case <-ticker.C:
 			hardware.DebugLedOn()
 
-			curDev = (curDev + 1) % len(s.devices)
+			oldDev := curDev
+			for {
+				curDev = (curDev + 1) % len(s.devices)
 
-			dev := s.devices[curDev]
-			//logs.Tracef("get device %s", dev)
+				dev := s.devices[curDev]
+				//logs.Tracef("get device %s", dev)
 
-			err := dev.Work()
-			if err != nil {
-				logs.Errorf("device %s error: %s", dev, err)
+				worked, err := dev.Work()
+				if err != nil {
+					logs.Errorf("device %s error: %s", dev, err)
+				}
+
+				if worked || oldDev == curDev {
+					break
+				}
 			}
 
 			hardware.DebugLedOff()

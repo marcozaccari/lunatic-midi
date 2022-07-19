@@ -68,10 +68,10 @@ func (dev *LedStripDevice) Done() {
 	dev.i2c.Close()
 }
 
-func (dev *LedStripDevice) Work() error {
+func (dev *LedStripDevice) Work() (bool, error) {
 	if time.Now().Before(dev.nextWrite) {
 		//logs.Trace("leds: too early")
-		return nil
+		return false, nil
 	}
 
 	var buffer [256]byte
@@ -101,15 +101,16 @@ func (dev *LedStripDevice) Work() error {
 		buffer[buffLen] = 0x40
 		buffLen++
 
+		err := dev.i2c.Write(buffer[:], buffLen)
+
 		dev.nextWrite = time.Now().Add(time.Millisecond * LedsWritesDelayMs)
 
-		err := dev.i2c.Write(buffer[:], buffLen)
 		if err != nil {
-			return fmt.Errorf("%s (%d bytes)", err, buffLen)
+			return true, fmt.Errorf("%s (%d bytes)", err, buffLen)
 		}
 	}
 
-	return nil
+	return true, nil
 }
 
 func (dev *LedStripDevice) Fill(color LedColor) {
@@ -132,10 +133,7 @@ func (dev *LedStripDevice) Set(index int, color LedColor) {
 	dev.framebuffer[index] = color
 }
 
-func (dev *LedStripDevice) Blink(color LedColor, count int, on, off time.Duration) {
-	dev.mu.Lock()
-	defer dev.mu.Unlock()
-
+func (dev *LedStripDevice) BlinkAll(color LedColor, count int, on, off time.Duration) {
 	dev.Fill(LedOff)
 	time.Sleep(time.Millisecond * 10)
 
@@ -144,6 +142,19 @@ func (dev *LedStripDevice) Blink(color LedColor, count int, on, off time.Duratio
 		time.Sleep(on)
 
 		dev.Fill(LedOff)
+		time.Sleep(off)
+	}
+}
+
+func (dev *LedStripDevice) Blink(index int, color LedColor, count int, on, off time.Duration) {
+	dev.Fill(LedOff)
+	time.Sleep(time.Millisecond * 10)
+
+	for k := 0; k < count; k++ {
+		dev.Set(index, color)
+		time.Sleep(on)
+
+		dev.Set(index, LedOff)
 		time.Sleep(off)
 	}
 }

@@ -1,4 +1,4 @@
-package linear_keyboard
+package example
 
 import (
 	"github.com/marcozaccari/lunatic-midi/devices"
@@ -13,14 +13,11 @@ type Program struct {
 
 	leds *devices.LedStripDevice
 
-	splitKey int
-
 	stopChan chan struct{}
 }
 
 type MIDI interface {
 	SendKey(ch byte, key byte, state bool, vel byte)
-	SendPitchBend(ch byte, vel int16)
 	SendCtrlChange(ch byte, ctrl byte, value byte)
 }
 
@@ -43,16 +40,10 @@ func (p *Program) Work() {
 		case ev := <-p.chans.Keyboard:
 			logs.Tracef("keyboard event: %v", ev)
 
-			ch := 0
-			col := devices.LedRed
-			if p.splitKey > 0 && ev.Key >= p.splitKey {
-				ch = 1
-				col = devices.LedViolet
-			}
-			p.midi.SendKey(byte(ch), byte(ev.Key), ev.State, ev.Velocity)
+			p.midi.SendKey(0, byte(ev.Key), ev.State, ev.Velocity)
 
 			if ev.State {
-				p.leds.Set(ev.Key-1, col)
+				p.leds.Set(ev.Key-1, devices.LedRed)
 			} else {
 				p.leds.Set(ev.Key-1, devices.LedOff)
 			}
@@ -65,25 +56,15 @@ func (p *Program) Work() {
 		case ev := <-p.chans.MIDI:
 			logs.Tracef("midi event: %v", ev)
 
-			ledCh := devices.LedBlue + devices.LedColor(ev.Ch)
-			if ledCh > devices.LedWhite {
-				ledCh = devices.LedWhite
-			}
-
 			switch {
 			case ev.NoteOn > 0:
-				p.leds.Set(ev.NoteOn, ledCh)
+				p.leds.Set(ev.NoteOn, devices.LedBlue)
 			case ev.NoteOff > 0:
-				p.leds.Set(ev.NoteOff, ledCh)
+				p.leds.Set(ev.NoteOff, devices.LedBlue)
 			}
 
 		case ev := <-p.chans.Buttons:
 			logs.Tracef("buttons event: %v", ev)
-
-			if ev.Button == 95 && ev.State {
-				// Split
-				p.getSplit()
-			}
 
 		case <-p.stopChan:
 			return
