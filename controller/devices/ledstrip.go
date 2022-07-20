@@ -9,7 +9,7 @@ import (
 const (
 	LedCount = 60
 
-	MaxSendBytesPerLoop = 16 // 16*8*2.5 = 320us
+	LedsMaxSendBytesPerLoop = 16 // 16*8*2.5 = 320us
 
 	LedsWritesDelayMs = 3 // needs a delay of 2.5ms after every update
 
@@ -92,7 +92,7 @@ func (dev *LedStripDevice) Work() (bool, error) {
 
 			dev.framebufferLast[x] = dev.framebuffer[x]
 
-			if buffLen >= MaxSendBytesPerLoop {
+			if buffLen >= LedsMaxSendBytesPerLoop {
 				break
 			}
 		}

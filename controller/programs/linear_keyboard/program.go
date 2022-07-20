@@ -11,7 +11,8 @@ type Program struct {
 
 	midi MIDI
 
-	leds *devices.LedStripDevice
+	leds    *devices.LedStripDevice
+	buttons *devices.ButtonsDevice
 
 	splitKey int
 
@@ -24,11 +25,17 @@ type MIDI interface {
 	SendCtrlChange(ch byte, ctrl byte, value byte)
 }
 
-func NewProgram(chans events.Channels, leds *devices.LedStripDevice, midi MIDI) *Program {
+const (
+	// GEM WS-1 buttons mapping: 89-0 .. 96-7
+	ButLight0 = 89
+)
+
+func NewProgram(chans events.Channels, leds *devices.LedStripDevice, btn *devices.ButtonsDevice, midi MIDI) *Program {
 	p := Program{
-		leds:  leds,
-		chans: chans,
-		midi:  midi,
+		leds:    leds,
+		buttons: btn,
+		chans:   chans,
+		midi:    midi,
 	}
 
 	return &p
@@ -80,9 +87,16 @@ func (p *Program) Work() {
 		case ev := <-p.chans.Buttons:
 			logs.Tracef("buttons event: %v", ev)
 
-			if ev.Button == 96 && ev.State {
+			if ev.Button == ButLight0+7 && ev.State {
 				// Split
-				p.getSplit()
+				if p.splitKey == 0 {
+					p.buttons.SetLight(7, true)
+					p.getSplit()
+				} else {
+					p.splitKey = 0
+				}
+
+				p.buttons.SetLight(7, p.splitKey > 0)
 			}
 
 		case <-p.stopChan:

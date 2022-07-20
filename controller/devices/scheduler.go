@@ -13,7 +13,8 @@ import (
 type Scheduler struct {
 	devices []deviceInt
 
-	leds *LedStripDevice
+	leds    *LedStripDevice
+	buttons *ButtonsDevice
 
 	chans events.Channels
 
@@ -127,6 +128,7 @@ func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error 
 		}
 
 		s.devices = append(s.devices, buttons)
+		s.buttons = buttons
 
 		logs.Infof("Buttons initialized (%s)", cfg.Buttons.I2C)
 	}
@@ -184,4 +186,8 @@ func (s *Scheduler) parseDevices(cfg config.Devices, velocityPath string) error 
 
 func (s *Scheduler) GetLedStrip() *LedStripDevice {
 	return s.leds
+}
+
+func (s *Scheduler) GetButtons() *ButtonsDevice {
+	return s.buttons
 }

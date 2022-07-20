@@ -1,8 +1,8 @@
 package devices
 
-// TODO set lights
-
 import (
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/events"
@@ -12,6 +12,8 @@ import (
 const (
 	MaxButtons       = 128
 	MaxButtonsEvents = 32
+
+	ButtonsMaxSendBytesPerLoop = 16 // 16*8*2.5 = 320us
 
 	ReadButtonsEveryMs = 10 // 7ms antibounce lag
 )
@@ -24,6 +26,11 @@ type ButtonsDevice struct {
 	lastRead time.Time
 
 	events events.Channel[events.Buttons]
+
+	mu sync.RWMutex
+	lightState,
+
+	lightStateLast [MaxButtons]bool
 }
 
 func NewButtons(i2cAddr byte, ch events.Channel[events.Buttons]) (*ButtonsDevice, error) {
@@ -102,5 +109,49 @@ func (dev *ButtonsDevice) Work() (bool, error) {
 		}
 	}
 
+	// Lights
+	size = 0
+
+	dev.mu.RLock()
+
+	for x := 0; x < MaxButtons; x++ {
+		if dev.lightState[x] != dev.lightStateLast[x] {
+			b := byte(x)
+
+			if dev.lightState[x] {
+				b |= 0x80
+			}
+
+			buffer[size] = b
+			size++
+
+			dev.lightStateLast[x] = dev.lightState[x]
+
+			if size >= ButtonsMaxSendBytesPerLoop {
+				break
+			}
+		}
+	}
+
+	dev.mu.RUnlock()
+
+	if size > 0 {
+		err := dev.i2c.Write(buffer[:], size)
+		if err != nil {
+			return true, fmt.Errorf("%s (%d bytes)", err, size)
+		}
+	}
+
 	return true, nil
+}
+
+func (dev *ButtonsDevice) SetLight(index int, state bool) {
+	dev.mu.Lock()
+	defer dev.mu.Unlock()
+
+	if index < 0 || index >= MaxButtons {
+		return
+	}
+
+	dev.lightState[index] = state
 }

@@ -109,7 +109,12 @@ func start(debug bool) error {
 
 	go devScheduler.Work()
 
-	program := linear_keyboard.NewProgram(ch, devScheduler.GetLedStrip(), midi)
+	program := linear_keyboard.NewProgram(
+		ch,
+		devScheduler.GetLedStrip(),
+		devScheduler.GetButtons(),
+		midi,
+	)
 	go program.Work()
 
 	sigc := make(chan os.Signal, 1)
