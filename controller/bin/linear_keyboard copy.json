@@ -36,9 +36,9 @@
 				},
 				{
 					"Type": "ribbon",
-					"Bits": 15,
+					"Bits": 11,
 					"RawMin": 0,
-					"RawMax": 32767
+					"RawMax": 480
 				}
 			]
 		},

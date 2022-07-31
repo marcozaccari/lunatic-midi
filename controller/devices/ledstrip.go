@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 )
 
 const (
@@ -29,7 +31,7 @@ const (
 )
 
 type LedStripDevice struct {
-	Device
+	i2c hardware.I2C
 
 	offset int
 
@@ -45,8 +47,6 @@ func NewLedStrip(i2cAddr byte, offset int) (*LedStripDevice, error) {
 	dev := &LedStripDevice{
 		offset: offset,
 	}
-
-	dev.Device.Type = DeviceLedStrip
 
 	err := dev.i2c.Open(i2cAddr)
 	if err != nil {
@@ -66,6 +66,10 @@ func NewLedStrip(i2cAddr byte, offset int) (*LedStripDevice, error) {
 	}
 
 	return dev, nil
+}
+
+func (dev *LedStripDevice) String() string {
+	return fmt.Sprintf("ledstrip(0x%x)", dev.i2c.Address)
 }
 
 func (dev *LedStripDevice) Done() {

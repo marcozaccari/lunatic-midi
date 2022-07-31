@@ -1,9 +1,11 @@
 package devices
 
 import (
+	"fmt"
 	"math"
 	"time"
 
+	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
@@ -22,14 +24,15 @@ const (
 )
 
 type AnalogDevice struct {
-	Device
+	enabled bool
+
+	i2cAddr byte
+	adc     *hardware.ADS1115
 
 	channels   [AnalogChannels]analogChannel
 	curChannel int
 
 	events events.Channel[events.Analog]
-
-	continousSampling bool
 
 	lastRead time.Time
 }
@@ -43,16 +46,18 @@ type analogChannel struct {
 	bits           int
 
 	lastValue int
+
+	ema *EMAfilter
 }
 
 func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, error) {
 	dev := &AnalogDevice{
-		events: ch,
+		events:  ch,
+		i2cAddr: i2cAddr,
 	}
 
-	dev.Device.Type = DeviceAnalog
-
-	err := dev.i2c.Open(i2cAddr)
+	var err error
+	dev.adc, err = hardware.NewADS1115(i2cAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -61,29 +66,15 @@ func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, e
 		dev.channels[i].lastValue = -100
 	}
 
-	dev.continousSampling = false
-
-	err = dev.reset()
-	if err != nil {
-		return nil, err
-	}
-
-	err = dev.setChannel(dev.curChannel)
-	if err != nil {
-		return nil, err
-	}
-
 	return dev, nil
 }
 
-// Reset device
-func (dev *AnalogDevice) reset() error {
-	buffer := [1]byte{0x06}
-	return dev.i2c.Write(buffer[:], 1)
+func (dev *AnalogDevice) String() string {
+	return fmt.Sprintf("analog(0x%x)", dev.i2cAddr)
 }
 
 func (dev *AnalogDevice) Done() {
-	dev.i2c.Close()
+	dev.adc.Done()
 }
 
 func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType, bits int, rawMin, rawMax uint) {
@@ -95,7 +86,21 @@ func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType, bits int
 		rawMax:  rawMax,
 	}
 
+	var emaBits uint
+	if ctype == AnalogChannelRibbon {
+		emaBits = 14 // pitch bend 128*128 = 16384 (-8192..+8192)
+	} else {
+		// Slider, CC 0-127
+		emaBits = 7
+	}
+	dev.channels[channel].ema = NewEMAfilter(emaBits)
+
 	logs.Infof("Set channel %d: %+v", channel, dev.channels[channel])
+
+	dev.enabled = true
+
+	dev.curChannel = channel
+	dev.setChannel(dev.curChannel)
 }
 
 func (dev *AnalogDevice) Work() (bool, error) {
@@ -108,15 +113,16 @@ func (dev *AnalogDevice) Work() (bool, error) {
 		dev.lastRead = time.Now()
 	}()
 
-	curCh := dev.getNextEnabledChannelNum()
-	if curCh == -1 {
+	if !dev.enabled {
 		// All channels disabled
 		return false, nil
 	}
-	dev.curChannel = curCh
-	channel := &dev.channels[curCh]
 
-	ui16, err := dev.readSample(curCh)
+	channel := &dev.channels[dev.curChannel]
+
+	// Read sample from current channel.
+
+	ui16, err := dev.adc.ReadSample()
 	if err != nil {
 		return true, err
 	}
@@ -124,9 +130,12 @@ func (dev *AnalogDevice) Work() (bool, error) {
 	ui16 >>= (16 - channel.bits)
 	sample := int(ui16)
 
+	var value int = int(sample)
+
 	if uint(sample) >= channel.rawMax {
-		if dev.channels[curCh].typ == AnalogChannelRibbon {
+		if channel.typ == AnalogChannelRibbon {
 			sample = -1
+			value = -1
 		} else {
 			sample = int(channel.rawMax)
 		}
@@ -134,211 +143,61 @@ func (dev *AnalogDevice) Work() (bool, error) {
 		sample = int(channel.rawMin)
 	}
 
-	// 0-127 or 0-512
-	var max float32 = 127 // Slider
-	if dev.channels[curCh].typ == AnalogChannelRibbon {
-		max = 512
-	}
-	value := sample - int(channel.rawMin)
-	value = int(math.Round(float64(float32(value) * max / float32(channel.rawMax-channel.rawMin))))
+	if sample >= 0 {
+		// Scale up to 16 bits.
+		value = int(math.Round(float64(
+			float32(sample-int(channel.rawMin)) * 0xFFFF / float32(channel.rawMax-channel.rawMin))))
 
-	if channel.lastValue != sample {
+		// Filter the noisy input signal using an EMA single-pole filter
+		// with the pole in z = 0.96875 = 1 - 1/32 = 1 - 1/(2^5).
+		value = int(channel.ema.filter(uint(value)))
+
+		/*
+			// 0-127 or 0-512
+			var max float32 = 127 // Slider
+			if channel.typ == AnalogChannelRibbon {
+				max = 512
+			}
+			value := sample - int(channel.rawMin)
+			value = int(math.Round(float64(float32(value) * max / float32(channel.rawMax-channel.rawMin))))
+		*/
+	}
+
+	if channel.lastValue != value {
 		if channel.lastValue >= -1 {
 			dev.events <- events.Analog{
-				Channel: curCh,
+				Channel: dev.curChannel,
 				Type:    int(channel.typ),
 				Value:   value,
 				Raw:     sample,
 			}
 		}
-		channel.lastValue = sample
+		channel.lastValue = value
 	}
 
+	// Select next channel to read.
+
 	dev.curChannel = (dev.curChannel + 1) % AnalogChannels
-	dev.curChannel = dev.getNextEnabledChannelNum()
+	// find next enabled channel
+	for !dev.channels[dev.curChannel].enabled {
+		dev.curChannel = (dev.curChannel + 1) % AnalogChannels
+	}
 	dev.setChannel(dev.curChannel)
 
 	return true, nil
 }
 
-// Find next enabled channel
-func (dev *AnalogDevice) getNextEnabledChannelNum() int {
-	curCh := dev.curChannel
-
-	for !dev.channels[curCh].enabled {
-		curCh = (curCh + 1) % AnalogChannels
-		if curCh == dev.curChannel {
-			// All channels disabled
-			return -1
-		}
-	}
-
-	return curCh
-}
-
 func (dev *AnalogDevice) setChannel(channel int) error {
-	/*err := dev.reset()
-	if err != nil {
-		return err
-	}*/
-
-	cfg := analogConfig{
-		Channel:            ConfigChannels[channel],
-		Gain:               GAIN_4V,
-		Speed:              SPS_860,
-		ConversionMode:     CONV_ONESHOT,
-		Comparator:         COMP_TRADITIONAL,
-		ComparatorPolarity: COMP_POL_HIGH,
-		ComparatorLatching: COMP_LAT_OFF,
-		ComparatorQueue:    COMP_QUEUE_OFF,
+	cfg := hardware.AnalogConfig{
+		Channel:            hardware.ConfigChannels[channel],
+		Gain:               hardware.GAIN_4V,
+		Speed:              hardware.SPS_860,
+		ConversionMode:     hardware.CONV_ONESHOT,
+		Comparator:         hardware.COMP_TRADITIONAL,
+		ComparatorPolarity: hardware.COMP_POL_HIGH,
+		ComparatorLatching: hardware.COMP_LAT_OFF,
+		ComparatorQueue:    hardware.COMP_QUEUE_OFF,
 	}
 
-	return dev.writeConfig(cfg)
-}
-
-func (dev *AnalogDevice) readSample(channel int) (uint16, error) {
-	buffer := [2]byte{0, 0}
-
-	if !dev.continousSampling {
-		// read from conversion register
-		err := dev.i2c.Write(buffer[:], 1)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	err := dev.i2c.Read(buffer[:], 2)
-	if err != nil {
-		return 0, err
-	}
-
-	val := int16(buffer[0])<<8 | int16(buffer[1])
-	if val < 0 {
-		val = 0
-	}
-
-	return uint16(val), nil
-}
-
-type ConfigChannel byte
-
-const (
-	// Not differential channels
-	CH_AIN0 = 0x40
-	CH_AIN1 = 0x50
-	CH_AIN2 = 0x60
-	CH_AIN3 = 0x70
-)
-
-var ConfigChannels [4]ConfigChannel = [4]ConfigChannel{CH_AIN0, CH_AIN1, CH_AIN2, CH_AIN3}
-
-type ConfigGain byte
-
-const (
-	GAIN_6V   = 0   // +-6.144V
-	GAIN_4V   = 2   // +-4.096V
-	GAIN_2V   = 4   // +-2.048V
-	GAIN_1V   = 6   // +-1.024V
-	GAIN_05V  = 8   // +-0.512V
-	GAIN_025V = 0xA // +-0.256V
-)
-
-type ConfigSpeed byte
-
-const (
-	SPS_8   = 0
-	SPS_16  = 0x20
-	SPS_32  = 0x40
-	SPS_64  = 0x60
-	SPS_128 = 0x80 // 7,82ms
-	SPS_250 = 0xA0 // 4ms
-	SPS_475 = 0xC0 // 2,11ms
-	SPS_860 = 0xE0 // 1,17ms
-)
-
-type ConfigConversionMode byte
-
-const (
-	CONV_CONTINOUS = 0
-	CONV_ONESHOT   = 1
-)
-
-type ConfigComparatorType byte
-
-const (
-	COMP_TRADITIONAL = 0
-	COMP_WINDOW      = 0x10
-)
-
-type ConfigComparatorPolarity byte
-
-const (
-	COMP_POL_LOW  = 0 // Active low
-	COMP_POL_HIGH = 8 // Active high
-)
-
-type ConfigComparatorLatching byte
-
-const (
-	COMP_LAT_OFF = 0 // Non latching comparator
-	COMP_LAT_ON  = 4 // Latching comparator
-)
-
-type ConfigComparatorQueue byte
-
-const (
-	COMP_QUEUE_1   = 0 // Assert after one conversion
-	COMP_QUEUE_2   = 1 // Assert after two conversion
-	COMP_QUEUE_4   = 2 // Assert after four conversion
-	COMP_QUEUE_OFF = 3 // Disable comparator (ALERT/RDY on high impedance)
-)
-
-type analogConfig struct {
-	Channel            ConfigChannel
-	Gain               ConfigGain
-	Speed              ConfigSpeed
-	ConversionMode     ConfigConversionMode
-	Comparator         ConfigComparatorType
-	ComparatorPolarity ConfigComparatorPolarity
-	ComparatorLatching ConfigComparatorLatching
-	ComparatorQueue    ConfigComparatorQueue
-}
-
-func (dev *AnalogDevice) writeConfig(config analogConfig) error {
-	var buffer [3]byte
-
-	buffer[0] = 1 // write to config register
-	buffer[1] = byte(config.Channel) |
-		byte(config.Gain) |
-		byte(config.ConversionMode)
-	buffer[2] = byte(config.Speed) |
-		byte(config.Comparator) |
-		byte(config.ComparatorPolarity) |
-		byte(config.ComparatorLatching) |
-		byte(config.ComparatorQueue)
-
-	if config.ConversionMode == CONV_ONESHOT {
-		buffer[1] |= 0x80 // start conversion now
-	} else {
-		dev.continousSampling = true
-	}
-
-	err := dev.i2c.Write(buffer[:], 3)
-	if err != nil {
-		return err
-	}
-
-	if dev.continousSampling {
-		buffer[0] = 0
-
-		// prepare to read from conversion register
-		err := dev.i2c.Write(buffer[:], 1)
-		if err != nil {
-			return err
-		}
-	}
-
-	//logs.Tracef("analog: config: %x %x = %x", buffer[1], buffer[2], config)
-
-	return nil
+	return dev.adc.WriteConfig(cfg)
 }

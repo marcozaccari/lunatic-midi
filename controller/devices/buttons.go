@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
@@ -19,7 +20,7 @@ const (
 )
 
 type ButtonsDevice struct {
-	Device
+	i2c hardware.I2C
 
 	lastState [MaxButtons]bool
 
@@ -38,8 +39,6 @@ func NewButtons(i2cAddr byte, ch events.Channel[events.Buttons]) (*ButtonsDevice
 		events: ch,
 	}
 
-	dev.Device.Type = DeviceButtons
-
 	err := dev.i2c.Open(i2cAddr)
 	if err != nil {
 		return nil, err
@@ -53,6 +52,10 @@ func NewButtons(i2cAddr byte, ch events.Channel[events.Buttons]) (*ButtonsDevice
 	}
 
 	return dev, nil
+}
+
+func (dev *ButtonsDevice) String() string {
+	return fmt.Sprintf("buttons(0x%x)", dev.i2c.Address)
 }
 
 func (dev *ButtonsDevice) Done() {

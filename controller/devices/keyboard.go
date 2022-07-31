@@ -2,10 +2,12 @@ package devices
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"time"
 
+	"github.com/marcozaccari/lunatic-midi/devices/hardware"
 	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
@@ -18,7 +20,7 @@ const (
 )
 
 type KeyboardDevice struct {
-	Device
+	i2c hardware.I2C
 
 	keyOffset      int
 	velocityLookup []byte
@@ -37,8 +39,6 @@ func NewKeyboard(i2cAddr byte, num int, KeyOffset int, ch events.Channel[events.
 		keyOffset:      KeyOffset,
 		velocityLookup: make([]byte, 128),
 	}
-
-	dev.Device.Type = DeviceKeyboard
 
 	err := dev.i2c.Open(i2cAddr)
 	if err != nil {
@@ -61,6 +61,10 @@ func NewKeyboard(i2cAddr byte, num int, KeyOffset int, ch events.Channel[events.
 	dev.lastKey.KeyboardNum = num
 
 	return dev, nil
+}
+
+func (dev *KeyboardDevice) String() string {
+	return fmt.Sprintf("keyboard(0x%x)", dev.i2c.Address)
 }
 
 func (dev *KeyboardDevice) Done() {

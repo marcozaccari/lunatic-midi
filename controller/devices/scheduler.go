@@ -23,7 +23,6 @@ type Scheduler struct {
 
 type deviceInt interface {
 	Work() (bool, error)
-	GetType() DeviceType
 	Done()
 	String() string
 }
