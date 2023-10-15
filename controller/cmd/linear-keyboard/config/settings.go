@@ -1,28 +1,21 @@
 package config
 
 // Depends: go install github.com/marco-sacchi/go2jsonc/cmd/go2jsonc@latest
-//go:generate go2jsonc -type=Config -out=defaults.jsonc -doc-types=NotStructFields|NotArrayFields|NotMapFields
+//go:generate go2jsonc -type=Settings -out=defaults.jsonc -doc-types=NotFields
 
 import (
 	_ "embed"
 )
 
-type Config struct {
+type Settings struct {
 	MIDI    MIDI
 	Devices Devices
 
 	Logging Log
 }
 
-type Log struct {
-	TCPPort int // 0 = disabled
-	File    string
-	Stdout  bool
-	Syslog  bool
-}
-
 type MIDI struct {
-	// Get ports names using "amidi -l" or "lunatic-midi midiports"
+	// Get ports names using "amidi -l" or "linear-keyboard midiports"
 	// In order to obtain virtual ports, use:
 	//   "sudo modprobe snd-virmidi" or
 	//   "sudo echo 'snd-virmidi' >> /etc/modules" or
@@ -33,16 +26,16 @@ type MIDI struct {
 }
 
 type Devices struct {
-	Keyboards []DeviceKeyboard
-	Buttons   DeviceButtons
-	Analog    DeviceAnalog
-	LedStrip  DeviceLedStrip
+	Keyboard DeviceKeyboard
+	Buttons  DeviceButtons
+	Analog   DeviceAnalog
+	LedStrip DeviceLedStrip
 }
 
 type DeviceKeyboard struct {
-	I2C      string // I2C address (ex "0x30")
-	Offset   int    // Notes offset
-	Velocity string // Velocity curve (data/velocity/*.dat)
+	I2C string // I2C address (ex "0x30")
+
+	Velocity string // Velocity curve (see bin/velocity/*.dat): "hard1", "soft2"..
 }
 
 type DeviceButtons struct {
@@ -67,29 +60,27 @@ type AnalogChannel struct {
 
 type DeviceLedStrip struct {
 	I2C string // I2C address (ex "0x30")
-
-	Offset int
 }
 
-func ConfigDefaults() *Config {
-	return &Config{
+type Log struct {
+	TCPPort int // 0 = disabled
+	File    string
+	Stdout  bool
+	Syslog  bool
+}
+
+func SettingsDefaults() *Settings {
+	return &Settings{
 
 		MIDI: MIDI{
 			PortName: "hw:0,0,0",
 		},
 
 		Devices: Devices{
-			Keyboards: []DeviceKeyboard{
-				{},
-			},
-			Buttons: DeviceButtons{},
+			Keyboard: DeviceKeyboard{},
+			Buttons:  DeviceButtons{},
 			Analog: DeviceAnalog{
-				Channels: [4]AnalogChannel{
-					AnalogChannel{},
-					AnalogChannel{},
-					AnalogChannel{},
-					AnalogChannel{},
-				},
+				Channels: [4]AnalogChannel{{}, {}, {}, {}},
 			},
 			LedStrip: DeviceLedStrip{},
 		},
@@ -104,4 +95,4 @@ func ConfigDefaults() *Config {
 }
 
 //go:embed defaults.jsonc
-var ConfigDefaultsRaw string
+var SettingsDefaultsRaw string

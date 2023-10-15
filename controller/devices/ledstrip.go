@@ -65,6 +65,8 @@ func NewLedStrip(i2cAddr byte, offset int) (*LedStripDevice, error) {
 		return nil, err
 	}
 
+	registerLedStrip(dev)
+
 	return dev, nil
 }
 
@@ -72,11 +74,59 @@ func (dev *LedStripDevice) String() string {
 	return fmt.Sprintf("ledstrip(0x%x)", dev.i2c.Address)
 }
 
-func (dev *LedStripDevice) Done() {
+func (dev *LedStripDevice) Fill(color LedColor) {
+	dev.mu.Lock()
+	defer dev.mu.Unlock()
+
+	for x := 0; x < LedCount; x++ {
+		dev.framebuffer[x] = color
+	}
+}
+
+func (dev *LedStripDevice) Set(index int, color LedColor) {
+	dev.mu.Lock()
+	defer dev.mu.Unlock()
+
+	index = index - 1 - dev.offset
+
+	if index < 0 || index >= LedCount {
+		return
+	}
+
+	dev.framebuffer[index] = color
+}
+
+func (dev *LedStripDevice) Blink(index int, color LedColor, count int, on, off time.Duration) {
+	dev.Fill(LedOff)
+	time.Sleep(time.Millisecond * 10)
+
+	for k := 0; k < count; k++ {
+		dev.Set(index, color)
+		time.Sleep(on)
+
+		dev.Set(index, LedOff)
+		time.Sleep(off)
+	}
+}
+
+func (dev *LedStripDevice) BlinkAll(color LedColor, count int, on, off time.Duration) {
+	dev.Fill(LedOff)
+	time.Sleep(time.Millisecond * 10)
+
+	for k := 0; k < count; k++ {
+		dev.Fill(color)
+		time.Sleep(on)
+
+		dev.Fill(LedOff)
+		time.Sleep(off)
+	}
+}
+
+func (dev *LedStripDevice) done() {
 	dev.i2c.Close()
 }
 
-func (dev *LedStripDevice) Work() (bool, error) {
+func (dev *LedStripDevice) work() (bool, error) {
 	if time.Now().Before(dev.nextWrite) {
 		//logs.Trace("leds: too early")
 		return false, nil
@@ -119,52 +169,4 @@ func (dev *LedStripDevice) Work() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (dev *LedStripDevice) Fill(color LedColor) {
-	dev.mu.Lock()
-	defer dev.mu.Unlock()
-
-	for x := 0; x < LedCount; x++ {
-		dev.framebuffer[x] = color
-	}
-}
-
-func (dev *LedStripDevice) Set(index int, color LedColor) {
-	dev.mu.Lock()
-	defer dev.mu.Unlock()
-
-	index = index - 1 - dev.offset
-
-	if index < 0 || index >= LedCount {
-		return
-	}
-
-	dev.framebuffer[index] = color
-}
-
-func (dev *LedStripDevice) BlinkAll(color LedColor, count int, on, off time.Duration) {
-	dev.Fill(LedOff)
-	time.Sleep(time.Millisecond * 10)
-
-	for k := 0; k < count; k++ {
-		dev.Fill(color)
-		time.Sleep(on)
-
-		dev.Fill(LedOff)
-		time.Sleep(off)
-	}
-}
-
-func (dev *LedStripDevice) Blink(index int, color LedColor, count int, on, off time.Duration) {
-	dev.Fill(LedOff)
-	time.Sleep(time.Millisecond * 10)
-
-	for k := 0; k < count; k++ {
-		dev.Set(index, color)
-		time.Sleep(on)
-
-		dev.Set(index, LedOff)
-		time.Sleep(off)
-	}
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/devices/hardware"
-	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
 
@@ -26,7 +25,8 @@ type ButtonsDevice struct {
 
 	lastRead time.Time
 
-	events events.Channel[events.Buttons]
+	btnOffset int
+	events    ButtonsEvents
 
 	mu sync.RWMutex
 	lightState,
@@ -34,9 +34,9 @@ type ButtonsDevice struct {
 	lightStateLast [MaxButtons]bool
 }
 
-func NewButtons(i2cAddr byte, ch events.Channel[events.Buttons]) (*ButtonsDevice, error) {
+func NewButtons(i2cAddr byte, BtnOffset int) (*ButtonsDevice, error) {
 	dev := &ButtonsDevice{
-		events: ch,
+		btnOffset: BtnOffset,
 	}
 
 	err := dev.i2c.Open(i2cAddr)
@@ -51,6 +51,8 @@ func NewButtons(i2cAddr byte, ch events.Channel[events.Buttons]) (*ButtonsDevice
 		return nil, err
 	}
 
+	dev.events = registerButtons(dev)
+
 	return dev, nil
 }
 
@@ -58,11 +60,22 @@ func (dev *ButtonsDevice) String() string {
 	return fmt.Sprintf("buttons(0x%x)", dev.i2c.Address)
 }
 
-func (dev *ButtonsDevice) Done() {
+func (dev *ButtonsDevice) SetLight(index int, state bool) {
+	dev.mu.Lock()
+	defer dev.mu.Unlock()
+
+	if index < 0 || index >= MaxButtons {
+		return
+	}
+
+	dev.lightState[index] = state
+}
+
+func (dev *ButtonsDevice) done() {
 	dev.i2c.Close()
 }
 
-func (dev *ButtonsDevice) Work() (bool, error) {
+func (dev *ButtonsDevice) work() (bool, error) {
 	if time.Since(dev.lastRead).Milliseconds() < ReadButtonsEveryMs {
 		//logs.Trace("buttons: too early")
 		return false, nil
@@ -72,7 +85,6 @@ func (dev *ButtonsDevice) Work() (bool, error) {
 	var buffer [256]byte
 	var size int
 	var b byte
-	var event events.Buttons
 
 	err := dev.i2c.Read(buffer[:], 1)
 	if err != nil {
@@ -93,22 +105,27 @@ func (dev *ButtonsDevice) Work() (bool, error) {
 		if buffer[k] != 0xFF {
 			b = buffer[k]
 
+			var state bool
+
 			if (b & 0x80) == 0x80 {
-				event.State = true
+				state = true
 				b = b & 0x7F
 			} else {
-				event.State = false
+				state = false
 			}
-			event.Button = int(b) + 1 // 1..MaxButtons
+			button := int(b) + 1 // 1..
 
-			if dev.lastState[event.Button] == event.State {
+			if dev.lastState[button] == state {
 				// Firmware or hardware error
-				logs.Warnf("buttons: ignoring invalid %v", event)
+				logs.Warnf("buttons: ignoring invalid button %i = %v", button, state)
 				continue
 			}
-			dev.lastState[event.Button] = event.State
+			dev.lastState[button] = state
 
-			dev.events <- event
+			dev.events <- ButtonEvent{
+				Button: dev.btnOffset + button, // 1..MaxButtons
+				State:  state,
+			}
 		}
 	}
 
@@ -146,15 +163,4 @@ func (dev *ButtonsDevice) Work() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (dev *ButtonsDevice) SetLight(index int, state bool) {
-	dev.mu.Lock()
-	defer dev.mu.Unlock()
-
-	if index < 0 || index >= MaxButtons {
-		return
-	}
-
-	dev.lightState[index] = state
 }

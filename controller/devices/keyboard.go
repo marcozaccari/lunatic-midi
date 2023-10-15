@@ -1,14 +1,14 @@
 package devices
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"sync"
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/devices/hardware"
-	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
 
@@ -22,20 +22,20 @@ const (
 type KeyboardDevice struct {
 	i2c hardware.I2C
 
-	keyOffset      int
+	velocityMu     sync.RWMutex
 	velocityLookup []byte
 
 	lastRead time.Time
 
 	lastState [MaxKeyboardKeys]bool
-	lastKey   events.Keyboard
+	lastKey   KeyboardEvent
 
-	events events.Channel[events.Keyboard]
+	keyOffset int
+	events    KeyboardEvents
 }
 
-func NewKeyboard(i2cAddr byte, num int, KeyOffset int, ch events.Channel[events.Keyboard]) (*KeyboardDevice, error) {
+func NewKeyboard(i2cAddr byte, KeyOffset int) (*KeyboardDevice, error) {
 	dev := &KeyboardDevice{
-		events:         ch,
 		keyOffset:      KeyOffset,
 		velocityLookup: make([]byte, 128),
 	}
@@ -52,13 +52,11 @@ func NewKeyboard(i2cAddr byte, num int, KeyOffset int, ch events.Channel[events.
 		return nil, err
 	}
 
-	// initialize velocity table
-	for i := 0; i < 128; i++ {
-		dev.velocityLookup[i] = byte(i)
-	}
+	dev.resetVelocity()
 
 	dev.lastKey.Key = -1
-	dev.lastKey.KeyboardNum = num
+
+	dev.events = registerKeyboard(dev)
 
 	return dev, nil
 }
@@ -67,11 +65,61 @@ func (dev *KeyboardDevice) String() string {
 	return fmt.Sprintf("keyboard(0x%x)", dev.i2c.Address)
 }
 
-func (dev *KeyboardDevice) Done() {
+//go:generate sh -c "cp ../bin/velocity/*.dat velocity"
+//go:embed velocity
+var velocityFiles embed.FS
+
+func (dev *KeyboardDevice) LoadVelocity(table string) error {
+	dev.velocityMu.Lock()
+	defer dev.velocityMu.Unlock()
+
+	dev.resetVelocity()
+
+	if table == "" {
+		logs.Info("Reset velocity table")
+		return nil
+	}
+
+	logs.Info("Load velocity table " + table)
+
+	f, err := velocityFiles.Open(table + ".dat")
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	n, err := io.ReadAtLeast(f, dev.velocityLookup, 128)
+	if err != nil {
+		return err
+	}
+
+	if n != 128 {
+		return errors.New("invalid velocity file")
+	}
+
+	for k := 0; k < 128; k++ {
+		if dev.velocityLookup[k] == 0 {
+			dev.velocityLookup[k] = 1
+		} else if dev.velocityLookup[k] == 128 {
+			dev.velocityLookup[k] = 127
+		}
+	}
+
+	return nil
+}
+
+func (dev *KeyboardDevice) resetVelocity() {
+	for i := 0; i < 128; i++ {
+		dev.velocityLookup[i] = byte(i)
+	}
+}
+
+func (dev *KeyboardDevice) done() {
 	dev.i2c.Close()
 }
 
-func (dev *KeyboardDevice) Work() (bool, error) {
+func (dev *KeyboardDevice) work() (bool, error) {
 	if time.Since(dev.lastRead).Microseconds() < ReadKeyboardEveryUs {
 		//logs.Trace("keyboard: too early")
 		return false, nil
@@ -118,9 +166,9 @@ func (dev *KeyboardDevice) parse(b byte) {
 		keyOn = (b & 0x40) == 0x40
 
 		keyAbs = (b & 0x3F)
-		key = int(keyAbs) + dev.keyOffset
+		key = int(keyAbs)
 
-		dev.lastKey.Key = key + 1 // 1..MaxKeys
+		dev.lastKey.Key = key + 1 // 1..
 
 		if keyOn {
 			dev.lastKey.State = true
@@ -134,7 +182,10 @@ func (dev *KeyboardDevice) parse(b byte) {
 			velocity = 127
 		}
 
+		dev.velocityMu.RLock()
 		velocity = dev.velocityLookup[velocity]
+		dev.velocityMu.RUnlock()
+
 		dev.lastKey.Velocity = velocity
 
 		if dev.lastState[dev.lastKey.Key] == dev.lastKey.State {
@@ -144,35 +195,10 @@ func (dev *KeyboardDevice) parse(b byte) {
 		}
 		dev.lastState[dev.lastKey.Key] = dev.lastKey.State
 
-		dev.events <- dev.lastKey
-	}
-}
-
-func (dev *KeyboardDevice) LoadVelocity(filename string) error {
-	logs.Info("Load velocity table from " + filename)
-
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-
-	n, err := io.ReadAtLeast(f, dev.velocityLookup, 128)
-	if err != nil {
-		return err
-	}
-	if n != 128 {
-		return errors.New("invalid velocity file")
-	}
-
-	f.Close()
-
-	for k := 0; k < 128; k++ {
-		if dev.velocityLookup[k] == 0 {
-			dev.velocityLookup[k] = 1
-		} else if dev.velocityLookup[k] == 128 {
-			dev.velocityLookup[k] = 127
+		dev.events <- KeyboardEvent{
+			Key:      dev.keyOffset + dev.lastKey.Key, // 1..MaxKeys
+			State:    dev.lastKey.State,
+			Velocity: dev.lastKey.Velocity,
 		}
 	}
-
-	return nil
 }

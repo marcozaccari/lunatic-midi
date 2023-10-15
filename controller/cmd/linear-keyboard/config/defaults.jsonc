@@ -1,6 +1,6 @@
 {
 	"MIDI": {
-		// string - Get ports names using "amidi -l" or "lunatic-midi midiports"
+		// Get ports names using "amidi -l" or "linear-keyboard midiports"
 		// In order to obtain virtual ports, use:
 		//   "sudo modprobe snd-virmidi" or
 		//   "sudo echo 'snd-virmidi' >> /etc/modules" or
@@ -10,81 +10,65 @@
 		"PortName": "hw:0,0,0"
 	},
 	"Devices": {
-		"Keyboards": [
-			{
-				// string - I2C address (ex "0x30")
-				"I2C": "",
-				// int - Notes offset
-				"Offset": 0,
-				// string - Velocity curve (data/velocity/*.dat)
-				"Velocity": ""
-			}
-		],
+		"Keyboard": {
+			// I2C address (ex "0x30")
+			"I2C": "",
+
+			// Velocity curve (see bin/velocity/*.dat): "hard1", "soft2"..
+			"Velocity": ""
+		},
 		"Buttons": {
-			// string - I2C address (ex "0x30")
+			// I2C address (ex "0x30")
 			"I2C": ""
 		},
 		"Analog": {
-			// string
 			"I2C": "",
 			"Channels": [
 				{
-					// string - Channel type: "slider" / "ribbon"
+					// Channel type: "slider" / "ribbon"
 					"Type": "",
-					// int
+
 					"Bits": 0,
-					// int
 					"RawMin": 0,
-					// int
 					"RawMax": 0
 				},
 				{
-					// string - Channel type: "slider" / "ribbon"
+					// Channel type: "slider" / "ribbon"
 					"Type": "",
-					// int
+
 					"Bits": 0,
-					// int
 					"RawMin": 0,
-					// int
 					"RawMax": 0
 				},
 				{
-					// string - Channel type: "slider" / "ribbon"
+					// Channel type: "slider" / "ribbon"
 					"Type": "",
-					// int
+
 					"Bits": 0,
-					// int
 					"RawMin": 0,
-					// int
 					"RawMax": 0
 				},
 				{
-					// string - Channel type: "slider" / "ribbon"
+					// Channel type: "slider" / "ribbon"
 					"Type": "",
-					// int
+
 					"Bits": 0,
-					// int
 					"RawMin": 0,
-					// int
 					"RawMax": 0
 				}
 			]
 		},
 		"LedStrip": {
-			// string - I2C address (ex "0x30")
-			"I2C": "",
-			// int
-			"Offset": 0
+			// I2C address (ex "0x30")
+			"I2C": ""
 		}
 	},
 	"Logging": {
-		// int - 0 = disabled
+		// 0 = disabled
 		"TCPPort": 0,
-		// string
+
 		"File": "",
-		// bool
 		"Stdout": false,
-		// bool
 		"Syslog": false
 	}
 }

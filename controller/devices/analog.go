@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/devices/hardware"
-	"github.com/marcozaccari/lunatic-midi/events"
 	"github.com/modulo-srl/sparalog/logs"
 )
 
@@ -16,10 +15,10 @@ const (
 	ReadADCEveryUs = 1500 // SPS_860 = 1,2ms + 20us reboot time
 )
 
-type ChannelType int
+type AnalogChannelType int
 
 const (
-	AnalogChannelSlider ChannelType = iota
+	AnalogChannelSlider AnalogChannelType = iota
 	AnalogChannelRibbon
 )
 
@@ -32,7 +31,8 @@ type AnalogDevice struct {
 	channels   [AnalogChannels]analogChannel
 	curChannel int
 
-	events events.Channel[events.Analog]
+	chanOffset int
+	events     AnalogEvents
 
 	lastRead time.Time
 }
@@ -40,7 +40,7 @@ type AnalogDevice struct {
 type analogChannel struct {
 	enabled bool
 
-	typ ChannelType
+	typ AnalogChannelType
 
 	rawMin, rawMax uint
 	bits           int
@@ -50,10 +50,10 @@ type analogChannel struct {
 	ema *EMAfilter
 }
 
-func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, error) {
+func NewAnalog(i2cAddr byte, chanOffset int) (*AnalogDevice, error) {
 	dev := &AnalogDevice{
-		events:  ch,
-		i2cAddr: i2cAddr,
+		i2cAddr:    i2cAddr,
+		chanOffset: chanOffset,
 	}
 
 	var err error
@@ -66,6 +66,8 @@ func NewAnalog(i2cAddr byte, ch events.Channel[events.Analog]) (*AnalogDevice, e
 		dev.channels[i].lastValue = -100
 	}
 
+	dev.events = registerAnalog(dev)
+
 	return dev, nil
 }
 
@@ -73,11 +75,7 @@ func (dev *AnalogDevice) String() string {
 	return fmt.Sprintf("analog(0x%x)", dev.i2cAddr)
 }
 
-func (dev *AnalogDevice) Done() {
-	dev.adc.Done()
-}
-
-func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType, bits int, rawMin, rawMax uint) {
+func (dev *AnalogDevice) SetChannelType(channel int, ctype AnalogChannelType, bits int, rawMin, rawMax uint) {
 	dev.channels[channel] = analogChannel{
 		enabled: true,
 		typ:     ctype,
@@ -103,7 +101,11 @@ func (dev *AnalogDevice) SetChannelType(channel int, ctype ChannelType, bits int
 	dev.setChannel(dev.curChannel)
 }
 
-func (dev *AnalogDevice) Work() (bool, error) {
+func (dev *AnalogDevice) done() {
+	dev.adc.Done()
+}
+
+func (dev *AnalogDevice) work() (bool, error) {
 	if time.Since(dev.lastRead).Microseconds() < ReadADCEveryUs {
 		//logs.Trace("adc: too early")
 		return false, nil
@@ -165,8 +167,8 @@ func (dev *AnalogDevice) Work() (bool, error) {
 
 	if channel.lastValue != value {
 		if channel.lastValue >= -1 {
-			dev.events <- events.Analog{
-				Channel: dev.curChannel,
+			dev.events <- AnalogEvent{
+				Channel: dev.chanOffset + dev.curChannel,
 				Type:    int(channel.typ),
 				Value:   value,
 				Raw:     sample,
