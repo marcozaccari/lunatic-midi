@@ -16,6 +16,7 @@ import (
 
 	"github.com/modulo-srl/sparalog"
 	"github.com/modulo-srl/sparalog/logs"
+	"github.com/modulo-srl/sparalog/writers"
 
 	sync "github.com/sasha-s/go-deadlock"
 )
@@ -40,8 +41,8 @@ func main() {
 
 	fversion := flag.Bool("version", false, "Show program version")
 	fdebug := flag.Bool("debug", false, "Logs on stdout/stderr")
-	fdefaultConfig := flag.Bool("default-config", false, "Show default config")
-	fconfig := flag.String("config-file", "settings.json", "Set config file's absolute or relative path")
+	fconfig := flag.String("config-file", "settings", "Config file (absolute or relative path, without extension will try for .json, .jsonc, .yaml, .toml)")
+	fdefaultConfig := flag.String("default-config", "", "Show default config (\"json\", \"toml\" or \"yaml\")")
 	fmidiports := flag.Bool("midiports", false, "Show system MIDI ports")
 	flag.Parse()
 
@@ -55,14 +56,21 @@ func main() {
 		return
 	}
 
-	if *fdefaultConfig {
-		fmt.Println(config.GetDefaultConfig())
-		return
+	if *fdefaultConfig != "" {
+		s := config.GetDefaultConfig(*fdefaultConfig)
+		if s == "" {
+			flag.Usage()
+			os.Exit(1)
+		}
+		fmt.Println(s)
+		os.Exit(0)
 	}
 
-	err = config.LoadConfig(*fconfig)
+	configFilename := *fconfig
+
+	err = config.Load(configFilename)
 	if err != nil {
-		log.Panicf("Error loading settings: %v", err)
+		panic(err)
 	}
 
 	setLogs(*fdebug)
@@ -79,7 +87,7 @@ func main() {
 		logs.Error(err)
 	}
 
-	logs.Done()
+	sparalog.Stop()
 
 	if err != nil {
 		os.Exit(-2)
@@ -101,7 +109,7 @@ func start(devs worker.OutputDevices) error {
 	)
 
 	sig := <-sigc
-	logs.Warnf("terminating by signal \"%v\"", sig)
+	logs.Warningf("terminating by signal \"%v\"", sig)
 
 	devices.Stop()
 	worker.Stop()
@@ -110,25 +118,23 @@ func start(devs worker.OutputDevices) error {
 }
 
 func setLogs(debug bool) {
-	defer logs.Open()
+	defer sparalog.Start()
 
 	if debug {
 		// All log levels to standard out.
-		logs.Mute(sparalog.DebugLevel, false)
-		logs.Mute(sparalog.TraceLevel, false)
+		logs.Mute(logs.DebugLevel, false)
 		return
 	}
 
 	if config.Cfg.Logging.Stdout {
-		logs.Mute(sparalog.DebugLevel, false)
-		logs.Mute(sparalog.TraceLevel, false)
-		logs.ResetLevelsWriters(sparalog.DebugLevels, nil)
+		logs.Mute(logs.DebugLevel, false)
+		logs.ResetLevelWriters(logs.DebugLevel, nil)
 	} else {
 		logs.ResetWriters(nil)
 	}
 
 	if config.Cfg.Logging.Syslog {
-		sys := logs.NewSyslogWriter("linear-keyboard")
+		sys := writers.NewSyslogWriter("linear-keyboard")
 		logs.AddWriter(sys)
 	}
 
@@ -144,13 +150,13 @@ func setLogs(debug bool) {
 			filename = filepath.Dir(ex) + "/" + filename
 		}
 
-		wfi, err := logs.NewFileWriter(filename)
+		wfi, err := writers.NewFileWriter(filename)
 		if err != nil {
 			panic(err)
 		}
 
-		logs.AddLevelsWriter(sparalog.CriticalLevels, wfi)
-		logs.AddLevelWriter(sparalog.InfoLevel, wfi)
+		logs.AddLevelsWriter(logs.CriticalLevels, wfi)
+		logs.AddLevelWriter(logs.InfoLevel, wfi)
 	}
 
 	// TCP
@@ -158,7 +164,7 @@ func setLogs(debug bool) {
 		port := config.Cfg.Logging.TCPPort
 		logs.Info("tracing logs forwarded to TCP port ", port)
 
-		wtcp, err := logs.NewTCPWriter("", port, debug, func(state bool) {
+		wtcp, err := writers.NewTCPWriter("", port, debug, func(state bool) {
 			if debug {
 				if state {
 					logs.Info("enable tracing log to TCP")

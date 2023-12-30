@@ -1,0 +1,64 @@
+[MIDI]
+# Get ports names using "amidi -l" or "linear-keyboard midiports"
+# In order to obtain virtual ports, use:
+#   "sudo modprobe snd-virmidi" or
+#   "sudo echo 'snd-virmidi' >> /etc/modules" or
+#   "sudo echo 'snd-virmidi index=n' >> /etc/modprobe.d/snd-virmidi.conf"
+# 
+# Raspberry Zero: "hw:2,0,0"
+PortName = 'hw:0,0,0'
+
+[Devices]
+	[Devices.Keyboard]
+	# I2C address (ex "0x30")
+	I2C = ""
+	# Velocity curve (see bin/velocity/*.dat): "hard1", "soft2"..
+	Velocity = ""
+
+	[Devices.Buttons]
+	# I2C address (ex "0x30")
+	I2C = ""
+
+	[Devices.Analog]
+	I2C = ""
+
+				[[Devices.Analog.Channels]]
+		# Channel type: "slider" / "ribbon"
+		Type = ""
+		Bits = 0
+		RawMin = 0
+		RawMax = 0
+
+		[[Devices.Analog.Channels]]
+		# Channel type: "slider" / "ribbon"
+		Type = ""
+		Bits = 0
+		RawMin = 0
+		RawMax = 0
+
+		[[Devices.Analog.Channels]]
+		# Channel type: "slider" / "ribbon"
+		Type = ""
+		Bits = 0
+		RawMin = 0
+		RawMax = 0
+
+		[[Devices.Analog.Channels]]
+		# Channel type: "slider" / "ribbon"
+		Type = ""
+		Bits = 0
+		RawMin = 0
+		RawMax = 0
+
+
+
+	[Devices.LedStrip]
+	# I2C address (ex "0x30")
+	I2C = ""
+
+[Logging]
+# 0 = disabled
+TCPPort = 0
+File = ''
+Stdout = false
+Syslog = false

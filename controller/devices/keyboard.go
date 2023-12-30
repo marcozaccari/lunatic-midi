@@ -190,7 +190,7 @@ func (dev *KeyboardDevice) parse(b byte) {
 
 		if dev.lastState[dev.lastKey.Key] == dev.lastKey.State {
 			// Firmware or hardware error
-			logs.Warnf("keyboard: ignoring invalid %v", dev.lastKey)
+			logs.Warningf("keyboard: ignoring invalid %v", dev.lastKey)
 			return
 		}
 		dev.lastState[dev.lastKey.Key] = dev.lastKey.State

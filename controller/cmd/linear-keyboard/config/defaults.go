@@ -1,7 +1,7 @@
 package config
 
-// Depends: go install github.com/marco-sacchi/go2jsonc/cmd/go2jsonc@latest
-//go:generate go2jsonc -type=Settings -out=defaults.jsonc -doc-types=NotFields
+// Depends on: go install github.com/modulo-srl/mu-config/go2cfg@latest
+//go:generate go2cfg -type=Settings -out=defaults
 
 import (
 	_ "embed"
@@ -95,4 +95,10 @@ func SettingsDefaults() *Settings {
 }
 
 //go:embed defaults.jsonc
-var SettingsDefaultsRaw string
+var defaultsRawJsonc string
+
+//go:embed defaults.toml
+var defaultsRawToml string
+
+//go:embed defaults.yaml
+var defaultsRawYaml string

@@ -52,7 +52,7 @@ func (w *Worker) work() {
 	for {
 		select {
 		case ev := <-w.events.Keyboard:
-			logs.Tracef("keyboard event: %v", ev)
+			logs.Debugf("keyboard event: %v", ev)
 
 			ch := 0
 			col := devices.LedRed
@@ -69,12 +69,12 @@ func (w *Worker) work() {
 			}
 
 		case ev := <-w.events.Analog:
-			logs.Tracef("analog event: %v", ev)
+			logs.Debugf("analog event: %v", ev)
 
 			w.devs.Midi.SendCtrlChange(0, byte(ev.Channel), byte(ev.Value))
 
 		case ev := <-w.events.Midi:
-			logs.Tracef("midi event: %v", ev)
+			logs.Debugf("midi event: %v", ev)
 
 			ledCh := devices.LedBlue + devices.LedColor(ev.Ch)
 			if ledCh > devices.LedWhite {
@@ -89,7 +89,7 @@ func (w *Worker) work() {
 			}
 
 		case ev := <-w.events.Buttons:
-			logs.Tracef("buttons event: %v", ev)
+			logs.Debugf("buttons event: %v", ev)
 
 			if ev.Button == ButLight0+7 && ev.State {
 				// Split

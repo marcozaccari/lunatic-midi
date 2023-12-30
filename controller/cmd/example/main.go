@@ -110,7 +110,7 @@ func work() {
 	for {
 		select {
 		case ev := <-events.Keyboard:
-			logs.Tracef("keyboard event: %v", ev)
+			logs.Debugf("keyboard event: %v", ev)
 
 			midi.SendKey(0, byte(ev.Key), ev.State, ev.Velocity)
 
@@ -121,12 +121,12 @@ func work() {
 			}
 
 		case ev := <-events.Analog:
-			logs.Tracef("analog event: %v", ev)
+			logs.Debugf("analog event: %v", ev)
 
 			midi.SendCtrlChange(0, byte(ev.Channel), byte(ev.Value))
 
 		case ev := <-events.Midi:
-			logs.Tracef("midi event: %v", ev)
+			logs.Debugf("midi event: %v", ev)
 
 			switch {
 			case ev.NoteOn > 0:
@@ -136,7 +136,7 @@ func work() {
 			}
 
 		case ev := <-events.Buttons:
-			logs.Tracef("buttons event: %v", ev)
+			logs.Debugf("buttons event: %v", ev)
 			buttons.SetLight(ev.Button, ev.State)
 
 		case <-stopChan:

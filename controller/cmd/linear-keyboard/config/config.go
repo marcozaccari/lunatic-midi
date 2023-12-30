@@ -14,16 +14,34 @@ const Version = "lunatic linear keyboard 0.2"
 
 var Cfg = SettingsDefaults()
 
-func LoadConfig(filename string) error {
-	return settings.LoadFile(filename, &Cfg)
+// - format: "json", "toml", "yaml"
+func GetDefaultConfig(format string) string {
+	switch format {
+	case "json":
+		fallthrough
+	case "jsonc":
+		return defaultsRawJsonc
+	case "toml":
+		return defaultsRawToml
+	case "yaml":
+		return defaultsRawYaml
+	default:
+		return ""
+	}
 }
 
-func SaveConfig(filename string) error {
+func Load(filename string) error {
+	loadedFilename, err := settings.LoadFile(filename, &Cfg, true)
+	if err != nil {
+		return err
+	}
+	fmt.Println("settings loaded from: " + loadedFilename)
+
+	return err
+}
+
+func Save(filename string) error {
 	return settings.SaveFile(filename, Cfg, SettingsDefaults())
-}
-
-func GetDefaultConfig() string {
-	return SettingsDefaultsRaw
 }
 
 func ParseConfig() (devs worker.OutputDevices, err error) {
