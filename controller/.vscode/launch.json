@@ -9,10 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}",
+            "program": "${workspaceFolder}/cmd/linear-keyboard",
             "env": {},
-            "buildFlags": "-race",
-            "args": ["-debug", "-config-file=${workspaceFolder}/bin/linear_keyboard.json"],
+            //"buildFlags": "-race", // unsupported for raspberry :(
+            "args": ["-debug", "-config-file=${workspaceFolder}/bin/linear-keyboard.json"],
             
             //"showLog": true,
             //"trace": "log",
@@ -25,8 +25,8 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             "env": {},
-            "buildFlags": "-race",
-            "args": ["-config-file=${workspaceFolder}/bin/linear_keyboard.json"],
+            //"buildFlags": "-race", // unsupported for raspberry :(
+            "args": ["-config-file=${workspaceFolder}/bin/linear-keyboard.json"],
             //"showLog": true,
             //"trace": "log",
             //"logOutput": "rpc"

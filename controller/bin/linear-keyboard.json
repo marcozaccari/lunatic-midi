@@ -1,6 +1,6 @@
 {
 	"MIDI": {
-		"PortName": "hw:2,0,0"
+		"PortName": "Midi Through"
 	},
 	"Devices": {
 		"Keyboard": {
@@ -9,35 +9,6 @@
 		},
 		"Buttons": {
 			"I2C": "0x31"
-		},
-		"Analog": {
-			"I2C": "0x48",
-			"Channels": [
-				{
-					"Type": "slider",
-					"Bits": 10,
-					"RawMin": 42,
-					"RawMax": 374
-				},
-				{
-					"Type": "slider",
-					"Bits": 10,
-					"RawMin": 0,
-					"RawMax": 374
-				},
-				{
-					"Type": "slider",
-					"Bits": 10,
-					"RawMin": 0,
-					"RawMax": 374
-				},
-				{
-					"Type": "ribbon",
-					"Bits": 15,
-					"RawMin": 0,
-					"RawMax": 32767
-				}
-			]
 		},
 		"LedStrip": {
 			"I2C": "0x33"

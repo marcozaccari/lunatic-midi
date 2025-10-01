@@ -16,12 +16,14 @@ type Settings struct {
 
 type MIDI struct {
 	// Get ports names using "amidi -l" or "linear-keyboard midiports"
-	// In order to obtain virtual ports, use:
+	// - OR -
+	// in order to obtain virtual ports, use:
 	//   "sudo modprobe snd-virmidi" or
 	//   "sudo echo 'snd-virmidi' >> /etc/modules" or
 	//   "sudo echo 'snd-virmidi index=n' >> /etc/modprobe.d/snd-virmidi.conf"
 	//
 	// Raspberry Zero: "hw:2,0,0"
+	// Raspberry 4: ""
 	PortName string
 }
 

@@ -15,7 +15,7 @@ rsync -av --delete --exclude=.vscode ../ pi@lunatic:/opt/lunatic
 check_errors
 
 echo -e "\n$HIGH Compile $NC\n"
-ssh pi@lunatic ". /etc/profile && cd /opt/lunatic && go build"
+ssh pi@lunatic ". /etc/profile && cd /opt/lunatic/cmd/linear-keyboard && go build && mv linear-keyboard ../../"
 check_errors
 
 . run-devel.sh
