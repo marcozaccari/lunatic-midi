@@ -49,7 +49,7 @@ sudo reboot
 
 `/boot/firmware/config.txt`: add `dtoverlay=dwc2` to main section.
 
-`/boot/firmware/cmdline.txt`: append ` modules-load=dwc2,g_midi` to the first line.
+`/boot/firmware/cmdline.txt`: append `modules-load=dwc2,g_midi` to the first line.
 
 Note: `dwc2` is a driver for OTG, `g_midi` is Linux Gadget Module driver.
 

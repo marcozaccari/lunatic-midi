@@ -51,11 +51,11 @@ func NewMidi(port *string) (*MidiDevice, error) {
 		return nil, err
 	}
 
-	err = dev.listen()
-	if err != nil {
-		dev.done()
-		return nil, err
-	}
+	//err = dev.listen()
+	//if err != nil {
+	//	dev.done()
+	//	return nil, err
+	//}
 
 	dev.events = registerMidi(dev)
 

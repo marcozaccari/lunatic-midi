@@ -117,7 +117,7 @@ func (dev *ButtonsDevice) work() (bool, error) {
 
 			if dev.lastState[button] == state {
 				// Firmware or hardware error
-				logs.Warningf("buttons: ignoring invalid button %i = %v", button, state)
+				logs.Warningf("buttons: ignoring invalid button %d = %v", button, state)
 				continue
 			}
 			dev.lastState[button] = state

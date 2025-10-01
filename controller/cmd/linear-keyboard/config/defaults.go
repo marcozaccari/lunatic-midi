@@ -23,7 +23,7 @@ type MIDI struct {
 	//   "sudo echo 'snd-virmidi index=n' >> /etc/modprobe.d/snd-virmidi.conf"
 	//
 	// Raspberry Zero: "hw:2,0,0"
-	// Raspberry 4: "hw:4,0,0"  // amidi shows "IO  hw:4,0,0  MIDI Gadget MIDI 1"
+	// Raspberry 4: ""
 	PortName string
 }
 

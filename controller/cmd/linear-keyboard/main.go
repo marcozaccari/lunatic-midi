@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
 
 	"github.com/marcozaccari/lunatic-midi/cmd/linear-keyboard/config"
 	"github.com/marcozaccari/lunatic-midi/cmd/linear-keyboard/worker"
@@ -17,8 +16,6 @@ import (
 	"github.com/modulo-srl/sparalog"
 	"github.com/modulo-srl/sparalog/logs"
 	"github.com/modulo-srl/sparalog/writers"
-
-	sync "github.com/sasha-s/go-deadlock"
 )
 
 func usage() {
@@ -182,6 +179,6 @@ func setLogs(debug bool) {
 	}
 
 	// Watcher deadlock mutex.
-	sync.Opts.DeadlockTimeout = time.Second * 10
-	sync.Opts.OnPotentialDeadlock = func() {} // avoid ending the process
+	//sync.Opts.DeadlockTimeout = time.Second * 10
+	//sync.Opts.OnPotentialDeadlock = func() {} // avoid ending the process
 }

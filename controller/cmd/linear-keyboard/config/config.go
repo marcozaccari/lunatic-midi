@@ -66,6 +66,7 @@ func ParseConfig() (devs worker.OutputDevices, err error) {
 
 	keyb, err := devices.NewKeyboard(byte(addr), 0)
 	if err != nil {
+		err = fmt.Errorf("initializing keyboard (i2c 0x%x): %s", addr, err)
 		return
 	}
 
@@ -86,6 +87,7 @@ func ParseConfig() (devs worker.OutputDevices, err error) {
 
 	buttons, err := devices.NewButtons(byte(addr), 0)
 	if err != nil {
+		err = fmt.Errorf("initializing buttons (i2c 0x%x): %s", addr, err)
 		return
 	}
 
@@ -99,6 +101,7 @@ func ParseConfig() (devs worker.OutputDevices, err error) {
 
 	ana, err := devices.NewAnalog(byte(addr), 0)
 	if err != nil {
+		err = fmt.Errorf("initializing analog (i2c 0x%x): %s", addr, err)
 		return
 	}
 
@@ -130,6 +133,7 @@ func ParseConfig() (devs worker.OutputDevices, err error) {
 
 	leds, err := devices.NewLedStrip(byte(addr), 1)
 	if err != nil {
+		err = fmt.Errorf("initializing LedStrip (i2c 0x%x): %s", addr, err)
 		return
 	}
 
