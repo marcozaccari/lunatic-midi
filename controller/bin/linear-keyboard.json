@@ -1,6 +1,6 @@
 {
 	"MIDI": {
-		"PortName": "Midi Through"
+		"PortName": "hw:4,0,0"
 	},
 	"Devices": {
 		"Keyboard": {

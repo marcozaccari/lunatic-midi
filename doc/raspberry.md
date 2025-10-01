@@ -1,34 +1,76 @@
 # Raspberry Pi
 
-## Prepare a Raspberry Pi OS for devel environment
+## Pinout
+
+Header:
+
+| Pin               | Connection       | Pin             | Connection           |
+|-------------------|------------------|-----------------|----------------------|
+| 1 (3V3)           | -                | 2 (5V)          | Main power           |
+| 3 (GPIO2/I2C SDA) | I2C bus (data)   | 4 (5V)          | ADC                  |
+| 5 (GPIO3/I2C SCL) | I2C bus (clock)  | 6 (GND)         | GND                  |
+| 7 (GPIO4)         | -                | 8 (GPIO14/TXD)  | -                    |
+| 9 (GND)           | I2C bus (ground) | 10 (GPIO15/RXD) | -                    |
+| ..                | ..               | ..              | ..                   |
+| ..                | ..               | ..              | ..                   |
+| ..                | ..               | ..              | ..                   |
+| ..                | ..               | ..              | ..                   |
+| 19 (GPIO 10/MOSI) | -                | 20 (GND)        | Led - (and resistor) |
+| 21 (GPIO 9/MISO)  | -                | 22 (GPIO 25)    | Led +                |
+
+## Install and update OS
 
 - Write Rasp Pi OS (minimal, without GUI) on a new SD card, enabling SSH and WiFi and setting a custom user, with no telemetry.
 
 - find IP address, example: `nmap -sn 192.168.1.0/24`
 
-- `sudo apt update`, `sudo apt upgrade`, `sudo reboot`
-
 - secure SSH with `ssh-copy-id pi@address` and disabling login with password
 
 - add virtual host to local `/etc/hosts`: `<Raspberry IP> lunatic`
 
-### Enable I2C
+```sh
+sudo apt update
+sudo apt upgrade
+sudo apt install mc micro
+sudo reboot
+```
 
-- `sudo raspi-config` and enable I2C on Interfacing submenu
+### Set periferals and boot options
+
+#### Enable I2C
+
+- `sudo raspi-config` and enable I2C on Interface Options submenu
 
 - `sudo apt install i2c-tools`
 
 - check modules availability: `sudo i2cdetect -y 1`
 
-### Enable MIDI and OTG
+#### Enable MIDI and OTG
 
-Add `dtoverlay=dwc2` to main section of `/boot/firmware/config.txt`
+`/boot/firmware/config.txt`: add `dtoverlay=dwc2` to main section.
 
-Append `modules-load=dwc2,g_midi` to the first line of `/boot/firmware/cmdline.txt`
+`/boot/firmware/cmdline.txt`: append ` modules-load=dwc2,g_midi` to the first line.
 
-`dwc2` is a driver for OTG, `g_midi` is Linux Gadget Module driver.
+Note: `dwc2` is a driver for OTG, `g_midi` is Linux Gadget Module driver.
 
-### Disable unused services for faster startup
+### Disable unused services and periferals for faster startup
+
+`sudo raspi-config` and:
+
+- System Options: Logging to None
+- Interface Options: disable SPI, Serial Port
+- Performance Options: disable Fan
+
+Edit `/boot/firmware/config.txt`:
+
+```conf
+# Disable camera
+camera_auto_detect=0
+display_auto_detect=0
+
+# Add to the main section
+dtoverlay=disable-bt
+```
 
 ```sh
 # Disable rebuilding the manual pages index cache and man-db service
@@ -50,8 +92,6 @@ sudo apt remove --purge bluez
 # Misc
 sudo apt remove triggerhappy
 sudo systemctl disable triggerhappy
-sudo systemctl mask cups.service
-sudo systemctl mask cups-browsed.service
 
 sudo systemctl disable avahi-daemon
 sudo systemctl disable rpc-statd-notify
@@ -64,9 +104,7 @@ sudo dphys-swapfile uninstall
 sudo systemctl disable dphys-swapfile
 ```
 
-Add `dtoverlay=disable-bt` to main section of `/boot/firmware/config.txt`
-
-Add to `/etc/modprobe.d/raspi-blacklist.conf`:
+`/etc/modprobe.d/raspi-blacklist.conf`, add:
 
 ```conf
 blacklist btbcm
@@ -81,7 +119,7 @@ tmpfs    /var/log    tmpfs     defaults,nosuid,mode=0755,nodev,noatime 0 0
 
 ### Led (GPIO25) SET ON SYSTEM READY
 
-Create and make executable `/usr/local/bin/led-set.py`:
+Create and _make executable_ `/usr/local/bin/led-set.py`:
 
 ```python
 #!/usr/bin/env python
@@ -128,6 +166,4 @@ sudo systemctl enable last_command
 ```sh
 sudo mkdir /opt/lunatic
 sudo chown <user>:<user> /opt/lunatic
-
-sudo apt install libasound2-dev
 ```

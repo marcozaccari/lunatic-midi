@@ -2,6 +2,12 @@
 
 ## Raspberry
 
+### Dependencies
+
+```sh
+sudo apt install libasound2-dev
+```
+
 ### Go
 
 ```sh
@@ -28,7 +34,9 @@ rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.1.linux-arm64.tar.gz
 
 exit
 
-# (reboot and...)
+# (reboot and check Go version)
+sync
+sudo reboot
 go version
 ```
 
