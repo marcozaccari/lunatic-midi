@@ -3,12 +3,17 @@
 
 #include <xc.h>
 
+// Enable when PicKit debugger is connected to the board
+#define PROGRAMMER_CONNECTED
+
 void device_init(void);
 
 inline void led_on();
 inline void led_off();
-inline void led_debug_on();
-inline void led_debug_off();
+inline void led_toggle();
+
+// Hardware bridge flag
+#define HARDWARE_FLAG_PIN  PORTAbits.RA5;
 
 // Device configuration
 
@@ -16,9 +21,7 @@ inline void led_debug_off();
 
 // CONFIG1
 #pragma config FOSC = HS       // External High Speed Crystal Oscillator
-
-////////////////////     config WDTE = ON       // Watchdog timer enable
-////////////////////// config WDTE = OFF      // Watchdog timer enable
+#pragma config WDTE = ON       // Watchdog timer enable
 #pragma config PWRTE = ON      // Power-up Timer enable: nominal 72 ms delay after a Power-on Reset or a Brown-out Reset to allow Vdd to stabilize.
 #pragma config MCLRE = ON      // MCRL/Vpp as the RESET pin
 #pragma config CP = OFF        // Program Memory READ Protection disabled

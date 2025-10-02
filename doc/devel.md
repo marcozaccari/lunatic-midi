@@ -12,7 +12,6 @@ sudo apt install libasound2-dev
 
 ```sh
 cd
-
 sudo su
 echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile
 exit
@@ -29,7 +28,7 @@ sudo su
 
 # For Raspberry Zero
 rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.1.linux-armv6l.tar.gz
-# For Raspberry 4
+# For Raspberry 4, Zero2
 rm -rf /usr/local/go && tar -C /usr/local -xzf go1.25.1.linux-arm64.tar.gz
 
 exit

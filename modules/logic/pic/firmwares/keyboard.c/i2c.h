@@ -10,7 +10,9 @@
 #define I2C_ADDRESS_ADD_TRIS_PIN1 TRISC0
 #define I2C_ADDRESS_ADD_TRIS_PIN2 TRISC5
 
+inline void I2C_isr(void);
+
 void I2C_init(void);
-void I2C_isr(void);
+inline void I2C_tx(uint8_t byte);
 
 #endif

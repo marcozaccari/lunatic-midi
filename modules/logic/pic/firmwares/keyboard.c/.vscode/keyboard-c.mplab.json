@@ -57,10 +57,16 @@
             "name": "default",
             "files": [
                 "main.c",
+                "keyboard.c",
+                "keyboard.h",
                 "device.h",
                 "device.c",
                 "i2c.c",
-                "i2c.h"
+                "i2c.h",
+                "timers.c",
+                "timers.h",
+                "tests.c",
+                "tests.h"
             ]
         }
     ]

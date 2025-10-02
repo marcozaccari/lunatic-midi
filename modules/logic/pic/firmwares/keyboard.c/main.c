@@ -1,53 +1,82 @@
-//#include <pic16f886.h>
 #include "device.h"
+#include "keyboard.h"
 #include "i2c.h"
+#include "timers.h"
+#include "tests.h"
+#include <pic16f886.h>
 
-// Variabile globale per il dato ricevuto
-volatile unsigned char i2c_data = 0;
+// Enable for I2C testing (see /controller/test/i2c/test_i2c.go)
+//#define TEST_I2C
 
 // ===== INTERRUPT =====
 void __interrupt() ISR(void) {
-    if (PIR1bits.SSPIF) {   // Se interrupt da I2C
-        I2C_isr();
-        PIR1bits.SSPIF = 0;  // clear interrupt flag
+    if (PIR1bits.TMR2IF) {
+        PIR1bits.TMR2IF = 0; // clear interrupt flag
+        // Timer
+        timers_isr();
+        return;
     }
+
+    if (PIR1bits.SSPIF) {
+        // I2C
+        PIR1bits.SSPIF = 0;  // clear interrupt flag
+        I2C_isr();
+    }
+}
+
+void hello() {
+    CLRWDT();
+    led_on();
+    __delay_ms(1000);
+    led_off();
+    __delay_ms(500);
+
+    CLRWDT();
+    led_on();
+    __delay_ms(100);
+    led_off();
+    __delay_ms(300);
+
+    CLRWDT();
+    led_on();
+    __delay_ms(100);
+    led_off();
+    __delay_ms(300);
+
+    CLRWDT();
+    led_on();
+    __delay_ms(100);
+    led_off();
+    __delay_ms(300);
+    led_on();
 }
 
 int main(void) {
     device_init();
     
     I2C_init();
+    timers_init();
+    keyboard_init();
 
+    PIR1bits.SSPIF = 0; // Clear I2C interrupt flag
+    PIR1bits.TMR2IF = 0; // clear Timer2 interrupt flag
+    
+    INTCONbits.PEIE = 1; //Enable peripheral interrupt
+    INTCONbits.GIE = 1;  // Enable global interrupt
+
+    #ifdef TEST_I2C
+    test_i2c(); 
+    #endif
+
+    hello();
+
+    // MAIN LOOP
+    led_on();
     for (;;) {
-        led_on();
-        for (int k = 0; k < 10000; k++);
-        led_off();
-        for (int k = 0; k < 10000; k++);
+        CLRWDT(); // clear watchdog
+
+        keyboard_scan();
     }
     
-    /*for (;;) {
-        led_on();
-        __delay_ms(1000); 
-        led_off();
-        __delay_ms(1000); 
-
-        led_on();
-        __delay_ms(1000); 
-        led_off();
-        __delay_ms(1000); 
-
-        led_on();
-        __delay_ms(1000); 
-        led_off();
-        __delay_ms(1000); 
-
-        led_on();
-        __delay_ms(1000); 
-        led_off();
-        __delay_ms(1000); 
-
-        led_on();
-    }*/
-
     return 0;
 };

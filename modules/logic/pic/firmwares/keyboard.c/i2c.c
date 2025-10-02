@@ -1,8 +1,43 @@
 #include "i2c.h"
+#include "device.h"
+
+// Circular buffer for transmission
+#define TX_BUFFER_SIZE 32
+volatile uint8_t tx_buffer[TX_BUFFER_SIZE];
+volatile uint8_t tx_buffer_head;
+volatile uint8_t tx_buffer_tail;
+
+// Add a byte to the transmission buffer.
+inline void I2C_tx(uint8_t byte) {
+    tx_buffer[tx_buffer_head] = byte;
+    tx_buffer_head = (tx_buffer_head + 1) % TX_BUFFER_SIZE;
+}
+
+// Get the number of bytes in the tx buffer (used internally).
+inline uint8_t I2C_get_tx_buffer_size() {
+    if (tx_buffer_head >= tx_buffer_tail) {
+        return tx_buffer_head - tx_buffer_tail;
+    } else {
+        return TX_BUFFER_SIZE - (tx_buffer_tail - tx_buffer_head);
+    }    
+}
+
+// Get the first byte from the tx buffer (used internally).
+// Note: do not call if buffer is empty.
+inline uint8_t I2C_get_tx_byte() {
+    uint8_t byte = tx_buffer[tx_buffer_tail];
+    tx_buffer_tail = (tx_buffer_tail + 1) % TX_BUFFER_SIZE;
+
+    return byte;
+}
 
 void I2C_init(void) {
+    // Init internal variables
+    tx_buffer_head = 0;
+    tx_buffer_tail = 0;
+
     // Set slave address
-    unsigned char address = I2C_ADDRESS_BASE;
+    uint8_t address = I2C_ADDRESS_BASE;
 
     I2C_ADDRESS_ADD_TRIS_PIN1 = 1; // set pin as input
     I2C_ADDRESS_ADD_TRIS_PIN2 = 1; // set pin as input
@@ -12,76 +47,89 @@ void I2C_init(void) {
     address += I2C_ADDRESS_ADD_PIN1;
     address += 0x30;
 
-    SSPADD = (unsigned char)(address << 1); // slave address (7 bit) + R/W = 0
+    SSPADD = (uint8_t)(address << 1); // slave address (7 bit) + R/W = 0
 
-    // Slew rate enabled for high speed (400kHz)
-    SSPSTATbits.SMP = 0;
+    SSPSTATbits.SMP = 0; // Slew rate enabled for high speed (400kHz)
+    //SSPSTATbits.SMP = 1; // Slew rate control disabled for standard speed mode (100 kHz and 1 MHz)
 
     // Configure the port
-    SSPCON2bits.GCEN = 0; // general address disabled
-    SSPCON = 0b00000110; // 7-bit address, slave
+    SSPCON2bits.GCEN = 0; // General call address disabled
 
-    // Enable the port
-    SSPCONbits.SSPEN = 1; 
+    SSPCON = 0b00000110; // I2C slave mode, 7-bit address
 
-    PIE1bits.SSPIE = 1; // Enable interrupts
-    PIR1bits.SSPIF = 0; // Clear interrupt flag
+    SSPCONbits.SSPEN = 1; // Enables the serial port and configures the SDA and SCL pins as the source of the serial port pins
 
-    INTCONbits.PEIE = 1; //Enable peripheral interrupt
-    INTCONbits.GIE = 1;  // Enable global interrupt
+    PIE1bits.SSPIE = 1; // Enable interrupts for I2C
 }
 
-void I2C_isr(void) {
-    unsigned char master_want_write;
+volatile unsigned char master_wants_read;
 
-    PIR1bits.SSPIF = 0;   // Clear flag
-
-    if (SSPCONbits.SSPOV) {
+inline void I2C_isr(void) {
+    if (SSPCONbits.SSPOV || SSPCONbits.WCOL) {
+        // Overflow or collision
+        // WCOL: The SSPBUF register is written while it is still transmitting the previous word (must be cleared in software)
+        // SSPOV: A byte is received while the SSPBUF register is still holding the previous byte. SSPOV is a “don’t care” in Transmit mode (must be cleared in software)
+        SSPCONbits.SSPOV = 0;
+        SSPCONbits.WCOL = 0;
+        //SSPCONbits.CKP = 1; // assure no clock stretch
+        //led_toggle();
+        return;
+    }
+    /*if (SSPCONbits.SSPOV) {
+        // Overflow
         SSPCONbits.SSPOV = 0; // clear overflow
         SSPCONbits.CKP = 1; // assure no clock stretch
-    }
+    }*/
 
     // received data or address?
-    if (SSPSTATbits.D_nA) { 
-        // data
-        if (master_want_write) {
-            return;
-        }
-        
-        if (SSPCONbits.CKP) {
-            // discard interrupt if CKP is up (master end)
-            return;
-        }
+    if (!SSPSTATbits.D_nA) { 
+        // received address
 
-        // TODO if buffer empty
-        SSPBUF = 0xFF;  // buffer empty
-        SSPCONbits.CKP = 1; // clock stretch
-
-        return;
-
-    } else {
-        // address
-        master_want_write = 1;
+        (void)SSPBUF; // dummy read
 
         // receive or write request?
         if (!SSPSTATbits.R_nW) {
-            // write request, discard
+            // write request
+            master_wants_read = 0;
+            SSPCONbits.CKP = 1; // release clock
             return;
         }
 
         // read request
 
+        master_wants_read = 1;  // set to master-wants-to-read
+
         if (SSPCONbits.CKP) {
-            // discard interrupt if CKP is up (master end)
-            return;
+            //led_toggle();
+            return;  // discard interrupt if CKP is up (master end without reading)
         }
 
-        master_want_write = 0;  // set to master-wants-to-read
-
-        SSPBUF = 123;
-        SSPCONbits.CKP = 1; // clock stretch
-
+        SSPBUF = I2C_get_tx_buffer_size();  // send buffer size
+        SSPCONbits.CKP = 1; // release clock
         return;
     }
 
+    // data
+    (void)SSPBUF; // dummy read
+
+    if (!master_wants_read) { // master wants to write data, discard
+        SSPCONbits.CKP = 1; // release clock
+        return;
+    }
+    
+    if (SSPCONbits.CKP) {
+        //led_toggle();
+        return;  // discard interrupt if CKP is up (master end without reading)
+    }
+
+    if (tx_buffer_head == tx_buffer_tail) {
+        // buffer empty, send 0xFF
+        SSPBUF = 0xFF;  
+        SSPCONbits.CKP = 1; // release clock
+        return;
+    }
+
+    // Send next TX buffer byte
+    SSPBUF = I2C_get_tx_byte();
+    SSPCONbits.CKP = 1; // release clock
 }
