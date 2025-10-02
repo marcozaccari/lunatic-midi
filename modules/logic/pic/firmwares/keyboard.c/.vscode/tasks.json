@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build and Program",
+            "dependsOrder": "sequence",
+            "dependsOn": ["Build", "Program"]
+          },
+        {
+            "label": "Program",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceRoot}/out/keyboard-c"
+            },
+            "command": "pk2cmd",
+            "args": [
+                "-PPIC16F886",
+                "-R",
+                "-M",
+                "-F",
+                "default.hex",
+            ]
+        },
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "/usr/bin/cmake",
+            "args": [
+                "--build",
+                "${workspaceRoot}/_build/keyboard-c/default",
+                "-v"
+            ]
+        },
+        
+    ]
+}
