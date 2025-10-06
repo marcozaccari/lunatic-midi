@@ -12,8 +12,8 @@ void timers_init(void) {
     // 1 / ( Fosc / 4 / prescaler ) * postscaler * PR2
     T2CON &= 0b10000100;  // mask scaler bits
     T2CON |= 0b00000011;  // prescaler = 16
-    T2CON |= 0b00001000; // postscaler = 2 (1ms)
-    PR2 = 155; // 1ms  <-- BEST
+    T2CON |= 0b00001000; // postscaler = 2
+    PR2 = 155; // 1ms
 
     T2CONbits.TMR2ON = 1;  // enable timer (counter in TMR2)
 }

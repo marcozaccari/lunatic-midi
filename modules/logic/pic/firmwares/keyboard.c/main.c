@@ -5,6 +5,8 @@
 #include <pic16f886.h>
 #include "tests.h"
 
+#define VERSION 1.0
+
 // Flashes the LED at each timer2 overflow
 //#define TEST_TIMER
 
