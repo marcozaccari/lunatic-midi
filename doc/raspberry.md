@@ -1,22 +1,8 @@
 # Raspberry Pi
 
-## Pinout
+## Header
 
-Header:
-
-| Pin               | Connection       | Pin             | Connection           |
-|-------------------|------------------|-----------------|----------------------|
-| 1 (3V3)           | -                | 2 (5V)          | Main power           |
-| 3 (GPIO2/I2C SDA) | I2C bus (data)   | 4 (5V)          | ADC                  |
-| 5 (GPIO3/I2C SCL) | I2C bus (clock)  | 6 (GND)         | GND                  |
-| 7 (GPIO4)         | -                | 8 (GPIO14/TXD)  | -                    |
-| 9 (GND)           | I2C bus (ground) | 10 (GPIO15/RXD) | -                    |
-| ..                | ..               | ..              | ..                   |
-| ..                | ..               | ..              | ..                   |
-| ..                | ..               | ..              | ..                   |
-| ..                | ..               | ..              | ..                   |
-| 19 (GPIO 10/MOSI) | -                | 20 (GND)        | Led - (and resistor) |
-| 21 (GPIO 9/MISO)  | -                | 22 (GPIO 25)    | Led +                |
+See [Raspberry Header](raspberry_header/README.md)
 
 ## Install and update OS
 
@@ -41,9 +27,14 @@ sudo reboot
 
 - `sudo raspi-config` and enable I2C on Interface Options submenu
 
+`/boot/firmware/config.txt`: add `dtparam=i2c_arm_baudrate=800000` to main section.
+
 - `sudo apt install i2c-tools`
 
 - check modules availability: `sudo i2cdetect -y 1`
+
+Notes: the I2C frequency, even if it starts and works perfectly at 800khz, after several reads it drops to about half (measured 320khz).
+Even going down, however, it remains an acceptable speed (~46us per byte).
 
 #### Enable MIDI and OTG
 

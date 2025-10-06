@@ -1,5 +1,7 @@
 package devices
 
+// I2C @ 320KHz: ~46us per bytes, 300/370us reading single note (~100 for query and ~200 to get 2 bytes of data)
+
 import (
 	"embed"
 	"errors"

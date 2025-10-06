@@ -23,8 +23,13 @@ inline uint8_t I2C_get_tx_buffer_size() {
 }
 
 // Get the first byte from the tx buffer (used internally).
-// Note: do not call if buffer is empty.
+// Returns 0xFF when buffer is empty.
 inline uint8_t I2C_get_tx_byte() {
+    if (tx_buffer_head == tx_buffer_tail) {
+        // buffer empty, return 0xFF
+        return 0xFF;
+    }
+
     uint8_t byte = tx_buffer[tx_buffer_tail];
     tx_buffer_tail = (tx_buffer_tail + 1) % TX_BUFFER_SIZE;
 
@@ -120,13 +125,6 @@ inline void I2C_isr(void) {
     if (SSPCONbits.CKP) {
         //led_toggle();
         return;  // discard interrupt if CKP is up (master end without reading)
-    }
-
-    if (tx_buffer_head == tx_buffer_tail) {
-        // buffer empty, send 0xFF
-        SSPBUF = 0xFF;  
-        SSPCONbits.CKP = 1; // release clock
-        return;
     }
 
     // Send next TX buffer byte

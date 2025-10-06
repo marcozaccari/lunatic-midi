@@ -38,15 +38,18 @@ void device_init(void) {
     init_watchdog();
 }
 
+volatile uint8_t led_state = 0;
+
 inline void led_on(void) {
     PORTCbits.RC2 = 1;
+    led_state = 1;
 }
 
 inline void led_off() {
     PORTCbits.RC2 = 0;
+    led_state = 0;
 }
 
-volatile uint8_t led_state = 0;
 inline void led_toggle() {
     if (led_state) {
         led_off();

@@ -2,8 +2,11 @@
 #include "keyboard.h"
 #include "i2c.h"
 #include "timers.h"
-#include "tests.h"
 #include <pic16f886.h>
+#include "tests.h"
+
+// Flashes the LED at each timer2 overflow
+//#define TEST_TIMER
 
 // Enable for I2C testing (see /controller/test/i2c/test_i2c.go)
 //#define TEST_I2C
@@ -68,6 +71,10 @@ int main(void) {
     test_i2c(); 
     #endif
 
+    #ifdef TEST_TIMER
+    test_timer();
+    #endif
+
     hello();
 
     // MAIN LOOP
@@ -76,6 +83,8 @@ int main(void) {
         CLRWDT(); // clear watchdog
 
         keyboard_scan();
+
+        //led_toggle();
     }
     
     return 0;
