@@ -4,7 +4,7 @@
 #define VERSION 1.0
 
 // Enable when PicKit debugger is connected to the board
-#define PROGRAMMER_CONNECTED
+//#define PROGRAMMER_CONNECTED
 
 // Flashes the LED at each timer2 overflow
 //#define TEST_TIMER

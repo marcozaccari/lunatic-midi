@@ -56,18 +56,18 @@
         {
             "name": "default",
             "files": [
-                "main.h",
-                "main.c",
-                "keyboard.c",
-                "keyboard.h",
-                "device.h",
-                "device.c",
-                "i2c.c",
-                "i2c.h",
-                "timers.c",
-                "timers.h",
-                "tests.c",
-                "tests.h"
+                "src/main.h",
+                "src/main.c",
+                "src/keyboard.c",
+                "src/keyboard.h",
+                "src/device.h",
+                "src/device.c",
+                "src/i2c.c",
+                "src/i2c.h",
+                "src/timers.c",
+                "src/timers.h",
+                "src/tests.c",
+                "src/tests.h"
             ]
         }
     ]

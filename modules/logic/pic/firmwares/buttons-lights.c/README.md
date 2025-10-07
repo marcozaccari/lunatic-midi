@@ -8,8 +8,7 @@ Button and light controller (buttons with built-in lights), compatible with deco
 
 ## Measurements
 
-- full buttons scan: X
-- 
+- full buttons scan + lights refresh: ~200us
 
 ## I2C protocol
 
