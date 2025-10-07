@@ -3,9 +3,6 @@
 
 #include <xc.h>
 
-// Enable when PicKit debugger is connected to the board
-#define PROGRAMMER_CONNECTED
-
 void device_init(void);
 
 inline void led_on();

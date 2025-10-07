@@ -12,8 +12,6 @@ uint8_t keys_state[8];  // General state of the keys (fully released/fully press
 uint8_t key_timers_h[64];
 uint8_t key_timers_l[64];
 
-uint16_t velocity_max_ms = 5000;
-
 /*******************************************************************************
  * A1..A4 = bank selector (0..7, A4 always 0)
  * A0     = key switch selector for velocity measure (0 = key press start, 1 = key press end)
@@ -110,6 +108,7 @@ inline void keyboard_scan_switch1(void) {
                     if (keys_state_bank & (1 << i)) {  // (antibounce) was the key actually pressed?
                         // Send key OFF event
                         I2C_tx((cur_key + i) | 0b10000000);  // key index = 10XXXXXX
+                        led_toggle();
 
                         keys_state_bank &= ~(1 << i); // reset key bit
                     }
@@ -185,6 +184,7 @@ inline void keyboard_scan_switch2(void) {
                     // send key ON event
                     I2C_tx(cur_key | 0b11000000);  // key index = 11XXXXXX
                     I2C_tx(velocity);
+                    led_toggle();
 
                     keys_state_bank |= (1 << i); // set key bit
                 }

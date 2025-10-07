@@ -7,6 +7,9 @@
 
 #define VERSION 1.0
 
+// Enable when PicKit debugger is connected to the board
+//#define PROGRAMMER_CONNECTED
+
 // Flashes the LED at each timer2 overflow
 //#define TEST_TIMER
 
@@ -30,6 +33,8 @@ void __interrupt() ISR(void) {
 }
 
 void hello() {
+    __delay_ms(50);
+
     CLRWDT();
     led_on();
     __delay_ms(1000);
