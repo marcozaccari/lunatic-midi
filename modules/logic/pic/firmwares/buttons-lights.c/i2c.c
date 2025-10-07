@@ -151,7 +151,6 @@ inline void I2C_isr(void) {
     // data
 
     if (!master_wants_read) { // master wants to write data
-        //led_toggle();
         I2C_rx(SSPBUF);  // add new data to the RX buffer
         return;
     }

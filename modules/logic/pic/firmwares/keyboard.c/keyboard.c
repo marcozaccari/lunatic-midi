@@ -1,4 +1,5 @@
 #include "keyboard.h"
+#include "main.h"
 #include "timers.h"
 #include "device.h"
 #include "i2c.h"
@@ -15,7 +16,7 @@ uint8_t key_timers_l[64];
 /*******************************************************************************
  * A1..A4 = bank selector (0..7, A4 always 0)
  * A0     = key switch selector for velocity measure (0 = key press start, 1 = key press end)
- * B0..B7 = bank key state (0 = switch start, 1 = switch end)
+ * B0..B7 = bank keys state (0 = switch start, 1 = switch end)
  */
 void keyboard_init(void) {
     // PORT A - decoder address (keys bank selection)

@@ -6,7 +6,7 @@
             "id": "",
             "device": "PIC16F886",
             "imageType": "application",
-            "imagePath": "./out/keyboard-c/default.elf",
+            "imagePath": "./out/buttons-lights-c/default.elf",
             "packs": [
                 {
                     "name": "PIC16Fxxx_DFP",
@@ -58,8 +58,10 @@
             "files": [
                 "main.h",
                 "main.c",
-                "keyboard.c",
-                "keyboard.h",
+                "buttons.c",
+                "buttons.h",
+                "lights.c",
+                "lights.h",
                 "device.h",
                 "device.c",
                 "i2c.c",

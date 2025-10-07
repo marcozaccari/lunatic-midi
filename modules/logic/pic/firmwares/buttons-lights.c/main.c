@@ -1,7 +1,8 @@
 #include "main.h"
 #include "device.h"
-#include "keyboard.h"
+#include "buttons.h"
 #include "i2c.h"
+#include "lights.h"
 #include "timers.h"
 #include <pic16f886.h>
 #include "tests.h"
@@ -23,7 +24,7 @@ void __interrupt() ISR(void) {
 }
 
 void hello() {
-    __delay_ms(50);
+    __delay_ms(80);
 
     CLRWDT();
     led_on();
@@ -56,7 +57,8 @@ int main(void) {
     
     I2C_init();
     timers_init();
-    keyboard_init();
+    buttons_init();
+    lights_init();
 
     PIR1bits.SSPIF = 0; // Clear I2C interrupt flag
     PIR1bits.TMR2IF = 0; // clear Timer2 interrupt flag
@@ -79,9 +81,10 @@ int main(void) {
     for (;;) {
         CLRWDT(); // clear watchdog
 
-        keyboard_scan();
-
         //led_toggle();
+
+        buttons_worker();
+        lights_worker();
     }
     
     return 0;
