@@ -2,7 +2,7 @@
 
 ## Header
 
-See [Raspberry Header](raspberry_header/README.md)
+See [Raspberry Header](/schematic/raspberry_header/README.md)
 
 ## Install and update OS
 
