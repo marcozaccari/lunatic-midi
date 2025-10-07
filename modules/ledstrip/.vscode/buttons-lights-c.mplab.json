@@ -1,0 +1,74 @@
+{
+    "version": "1.7",
+    "configurations": [
+        {
+            "name": "default",
+            "id": "",
+            "device": "PIC16F886",
+            "imageType": "application",
+            "imagePath": "./out/ledstrip-c/default.elf",
+            "packs": [
+                {
+                    "name": "PIC16Fxxx_DFP",
+                    "vendor": "Microchip",
+                    "version": "1.6.156"
+                }
+            ],
+            "fileSet": "default",
+            "toolchain": "toolchain XC8 3.10",
+            "userVariables": "default-uservariables",
+            "preBuildSteps": [],
+            "postBuildSteps": []
+        }
+    ],
+    "propertyGroups": [
+        {
+            "name": "default-uservariables",
+            "type": "uservariables",
+            "properties": {}
+        },
+        {
+            "name": "toolchain XC8 2.45",
+            "extend": "",
+            "type": "toolchain",
+            "provider": "microchip.toolchains:xc8@2.45",
+            "properties": {}
+        },
+        {
+            "name": "toolchain XC8 3.10",
+            "extend": "",
+            "type": "toolchain",
+            "provider": "microchip.toolchains:xc8@3.10",
+            "properties": {
+                "HI-TECH-COMP.asmlist": true
+            }
+        },
+        {
+            "name": "default-XC8",
+            "type": "toolchain",
+            "provider": "microchip.toolchains:pic-as@3.10",
+            "properties": {
+                "HI-TECH-COMP.asmlist": true
+            }
+        }
+    ],
+    "fileSets": [
+        {
+            "name": "default",
+            "files": [
+                "src/main.h",
+                "src/main.c",
+                "src/leds.c",
+                "src/leds.h",
+                "src/device.h",
+                "src/device.c",
+                "src/i2c.c",
+                "src/i2c.h",
+                "src/timers.c",
+                "src/timers.h",
+                "src/tests.c",
+                "src/tests.h"
+            ]
+        }
+    ]
+}
