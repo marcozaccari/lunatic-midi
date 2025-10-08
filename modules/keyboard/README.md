@@ -13,6 +13,8 @@ Controller for polyphonic keyboards equipped with double switches for velocity m
 
 ## I2C protocol
 
+### Receive keys events
+
 Master: `<ADDRESS> ...` continues reading data if necessary
 Slave (this device): `<DATA AVAIL LENGTH> <NOTE ON/OFF> <VELOCITY> <NOTE ON/OFF> ...`
 
@@ -23,3 +25,11 @@ Velocity:
 `0b0NNNNNNN`  `NNNNNNN` = Velocity (0 fastest..127 slowest)
 
 If Master tries to read more than what is available in the slave's buffer, the slave responds with `0xFF` values.
+
+### Send commands
+
+Master: `<ADDRESS> <COMMAND> ...` continues writing data if necessary
+
+Commands:
+
+    0b11111111 (0xFF) Reset

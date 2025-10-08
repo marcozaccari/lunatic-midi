@@ -27,6 +27,8 @@ void hello() {
     CLRWDT();
 
     #ifdef PROGRAMMER_CONNECTED
+    demo_stop();
+
     __delay_ms(20);
 
     led_on();
@@ -57,7 +59,6 @@ void hello() {
 
 uint8_t rx_led_idx = 0;
 inline void i2c_rx(void) {
-return;    
     uint8_t rx_size = I2C_get_rx_buffer_size();
     if (!rx_size)
         return;
@@ -77,6 +78,19 @@ return;
     if (rx_byte == 0xC1) {
         // Repaint request
         leds_update();
+        rx_led_idx = 0;
+        return;
+    }
+
+    if ((rx_byte >= 0xC8) && (rx_byte <= 0xCF)) {
+        // Fill leds
+        leds_fill(rx_byte - 0xC8);
+        return;
+    }
+
+    if ((rx_byte >= 0x40) && (rx_byte <= 0x7F)) {
+        // Set led index
+        rx_led_idx = rx_byte - 0x40;
         return;
     }
 
@@ -86,27 +100,21 @@ return;
         return;
     }
 
-    if ((rx_byte >= 0x40) && (rx_byte <= 0x7F)) {
-        // Set led index
-        rx_led_idx = rx_byte & 0b00111111;
-        return;
-    }
-
     if ((rx_byte >= 0x80) && (rx_byte <= 0x8F)) {
         // Tune Red
-        leds_tune_red(rx_byte);
+        leds_tune_red(rx_byte - 0x80);
         return;
     }
 
     if ((rx_byte >= 0x90) && (rx_byte <= 0x9F)) {
         // Tune Green
-        leds_tune_green(rx_byte);
+        leds_tune_green(rx_byte - 0x90);
         return;
     }
 
     if ((rx_byte >= 0xA0) && (rx_byte <= 0xAF)) {
         // Tune Blue
-        leds_tune_blue(rx_byte);
+        leds_tune_blue(rx_byte - 0xA0);
         return;
     }
 }

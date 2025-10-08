@@ -11,7 +11,6 @@ inline void demo_stop(void) {
     
     demo_mode = 0;
     leds_reset(1);
-    leds_update();
 }
 
 uint8_t demo_colors[14] = {1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0};

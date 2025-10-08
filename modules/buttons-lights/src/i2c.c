@@ -70,10 +70,17 @@ inline uint8_t I2C_get_rx_byte() {
     return byte;
 }
 
+void I2C_reset(void) {
+    tx_buffer_head = 0;
+    tx_buffer_tail = 0;
+    
+    rx_buffer_head = 0;
+    rx_buffer_tail = 0;
+}
+
 void I2C_init(void) {
     // Init internal variables
-    tx_buffer_head = 0; tx_buffer_tail = 0;
-    rx_buffer_head = 0; rx_buffer_tail = 0;
+    I2C_reset();
 
     // Set slave address
     uint8_t address = I2C_ADDRESS_BASE;

@@ -179,6 +179,11 @@ inline void leds_set(uint8_t led, uint8_t rgb) {
     leds_state[led] = rgb;
 }
 
+inline void leds_fill(uint8_t rgb) {
+    for (uint8_t i = 0; i < LEDS_COUNT; i++)
+        leds_state[i] = rgb;
+}
+
 inline void leds_reset(uint8_t reset_tuning) {
     for (uint8_t i = 0; i < LEDS_COUNT; i++)
         leds_state[i] = 0;

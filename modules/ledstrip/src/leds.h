@@ -9,7 +9,11 @@ void leds_init(void);
 
 inline void leds_reset(uint8_t reset_tuning);
 inline void leds_set(uint8_t led, uint8_t rgb);
+
+inline void leds_fill(uint8_t rgb);
+
 inline void leds_update(void);
+
 inline void leds_tune_red(uint8_t red);
 inline void leds_tune_green(uint8_t green);
 inline void leds_tune_blue(uint8_t blue);

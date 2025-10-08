@@ -60,13 +60,20 @@ inline void i2c_rx(void) {
 
     uint8_t rx_byte = I2C_get_rx_byte();
 
+    if (rx_byte == 0xFF) {
+        // Reset
+        I2C_reset();
+        return;
+    }
+
     if (rx_byte & 0x80) {
         // Set light index
         rx_curlight = rx_byte & 0x7F;
-    } else {
-        // Set light value
-        light_set(rx_curlight, rx_byte);
+        return;
     }
+
+    // Set light value
+    light_set(rx_curlight, rx_byte);
 }
 
 int main(void) {

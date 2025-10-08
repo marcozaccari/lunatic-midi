@@ -2,7 +2,7 @@
 
 Button and light controller (buttons with built-in lights), compatible with decoder boards.
 
-- 128 independent buttons
+- 127 independent buttons
 - led flashing
 - I2C interrupt based
 
@@ -23,14 +23,16 @@ Button ON/OFF:
 
 If Master tries to read more than what is available in the slave's buffer, the slave responds with `0xFF` values.
 
-### Set lights
+### Send commands
 
-Master: `<ADDRESS> <SET_LIGHT> <LIGHT_STATE>...` continues writing data if necessary
+Master: `<ADDRESS> <COMMAND> ...` continues writing data if necessary
 
-Set light: `0b1NNNNNNN`  `NNNNNNN` = Light index (0..127)
+Commands:
 
-Light state:  
-0 = OFF  
-1 = ON  
-2 = FLASH HIGH  
-3 = FLASH LOW
+    0b11111111 (0xFF)       Reset
+    0b1IIIIIII (0x80..0xFE) Set light index (0..126)
+    0b000000SS (0x00..0x03) Light state:
+                            0 = OFF  
+                            1 = ON  
+                            2 = FLASH HIGH  
+                            3 = FLASH LOW

@@ -27,14 +27,14 @@ sudo reboot
 
 - `sudo raspi-config` and enable I2C on Interface Options submenu
 
-`/boot/firmware/config.txt`: add `dtparam=i2c_arm_baudrate=800000` to main section.
+`/boot/firmware/config.txt`: add `dtparam=i2c_arm_baudrate=400000` to main section.
 
 - `sudo apt install i2c-tools`
 
 - check modules availability: `sudo i2cdetect -y 1`
 
-Notes: the I2C frequency, even if it starts and works perfectly at 800khz, after several reads it drops to about half (measured 320khz).
-Even going down, however, it remains an acceptable speed (~46us per byte).
+Notes: the I2C frequency, even if it starts and works perfectly at 400khz, after several reads it drops to about half (measured 180khz).
+Even going down, however, it remains an acceptable speed (~50us per byte).
 
 #### Enable MIDI and OTG
 

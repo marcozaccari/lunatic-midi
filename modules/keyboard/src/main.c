@@ -22,6 +22,20 @@ void __interrupt() ISR(void) {
     }
 }
 
+inline void i2c_rx(void) {
+    uint8_t rx_size = I2C_get_rx_buffer_size();
+    if (!rx_size)
+        return;
+
+    uint8_t rx_byte = I2C_get_rx_byte();
+
+    if (rx_byte == 0xFF) {
+        // Reset
+        I2C_reset();
+        return;
+    }
+}
+
 void hello() {
     __delay_ms(50);
 
@@ -79,9 +93,10 @@ int main(void) {
     for (;;) {
         CLRWDT(); // clear watchdog
 
-        keyboard_scan();
-
         //led_toggle();
+
+        i2c_rx();
+        keyboard_scan();
     }
     
     return 0;
