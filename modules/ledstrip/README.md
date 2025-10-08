@@ -1,6 +1,6 @@
 # Led strip controller firmware
 
-Controller compatible with RGB digital strip led.
+Controller compatible with WS2812 RGB digital strip led.
 
 - 64 independent RGB leds
 - 7 colors
@@ -8,16 +8,26 @@ Controller compatible with RGB digital strip led.
 
 ## Measurements
 
-- full buttons scan + lights refresh: ~200us
+- Full leds update: ~3ms
+
+Note: `cmake/ledstrip-c/default/user.cmake` has been added to change the "-O1" compile option.
+The LED update functions that communicate with the WS2812 have very tight timing, and redundant jumps should be avoided as much as possible.
 
 ## I2C protocol
 
-Master: `<ADDRESS> <SET_LIGHT> <LIGHT_STATE>...` continues writing data if necessary
+Master: `<ADDRESS> <COMMAND>...` continues writing data if necessary
 
-Set light: `0b1NNNNNNN`  `NNNNNNN` = Light index (0..127)
+Commands:
 
-Light state:  
-0 = OFF  
-1 = ON  
-2 = FLASH HIGH  
-3 = FLASH LOW
+    0b11111111 (0xFF) Reset (all leds off, reset led index = 0)
+                      NB: please wait at least 3ms after reset request
+
+    0b01IIIIII (0x40..0x7F) Set led index to I (00..59)
+    0b00000RGB (0x00..0x07) Set (current index) led color 
+
+    0b11000001 (0xC1) Repaint request (confirm updates)
+                      NB: please wait at least 3ms after repaint request
+
+    0b1000RRRR (0x80..0x8F) Tune R (color will be set to RRRR0000)
+    0b1001GGGG (0x90..0x9F) Tune G (color will be set to GGGG0000)
+    0b1010BBBB (0xA0..0xAF) Tune B (color will be set to BBBB0000)

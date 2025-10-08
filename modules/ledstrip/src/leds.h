@@ -1,22 +1,24 @@
-#ifndef LIGHTS_H
-#define	LIGHTS_H
+#ifndef LEDS_H
+#define	LEDS_H
 
 #include <stdint.h>
 
-void lights_init(void);  // must be called after buttons_init()
-void lights_worker(void);  // must be called at every main cycle
+#define LEDS_COUNT 60
 
-typedef enum {
-    LIGHT_OFF = 0,
-    LIGHT_ON,
-    LIGHT_FLASH_LOW,
-    LIGHT_FLASH_HIGH
-} light_state_t;
+void leds_init(void);
 
-#define LIGHTS_FLASH_HIGH_MS 200  // High flash frequency
+inline void leds_reset(uint8_t reset_tuning);
+inline void leds_set(uint8_t led, uint8_t rgb);
+inline void leds_update(void);
+inline void leds_tune_red(uint8_t red);
+inline void leds_tune_green(uint8_t green);
+inline void leds_tune_blue(uint8_t blue);
 
-void lights_reset(void);
-void light_set(uint8_t light, light_state_t state);
+#define LEDS_DEFAULT_RED_VALUE   0x0F
+#define LEDS_DEFAULT_GREEN_VALUE 0x0F
+#define LEDS_DEFAULT_BLUE_VALUE  0x0F
+
+#define LEDS_UPDATE_EVERY_MS 50
 
 #endif
 

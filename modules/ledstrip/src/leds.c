@@ -1,160 +1,203 @@
-#include "lights.h"
-#include "main.h"
-#include "timers.h"
-#include "i2c.h"
+#include "leds.h"
 #include "device.h"
+#include <pic16f886.h>
 
-uint8_t banks_lights_state[16];
+uint8_t leds_state[LEDS_COUNT]; // 0b00000RGB, 0b00000RGB, ...
 
-void update() {
-    TRISB = 0; // PortB as output
+uint8_t leds_red_value;
+uint8_t leds_green_value;
+uint8_t leds_blue_value;
 
-    for (uint8_t cur_bank = 0; cur_bank < 16; cur_bank++) {
+inline void leds_update() {
+    //led_on();
 
-        uint8_t addr = 0b00010000; // enable leds / disable buttons, leds latch low
-        addr |= cur_bank;  // select output bank
-        PORTA = addr;
+    // ws2812 reset (above 50 us)
+    PORTAbits.RA0 = 0;
+    __delay_us(50);
 
-        uint8_t bank_state = banks_lights_state[cur_bank];
-        #ifdef PROGRAMMER_CONNECTED
-    	bank_state &= 0b00111111; // remove upper 2 bits (used by programmer)
-        #endif
+    for (uint8_t cur_led = 0; cur_led < LEDS_COUNT; cur_led++) {
+        uint8_t state = leds_state[LEDS_COUNT-1-cur_led];
 
-        // output bank state to PORTB (inverted)
-        PORTB = ~bank_state;
-        __delay_us(2);  
+        uint8_t red, green, blue;
+        
+        if (state & 0b001)  // blue
+           blue = leds_blue_value;
+        else
+           blue = 0;
 
-        PORTAbits.RA5 = 1; // leds latch high
-        __delay_us(2);  
+        if (state & 0b010)  // green
+           green = leds_green_value;
+        else
+           green = 0;
+
+        if (state & 0b100)  // red
+           red = leds_red_value;
+        else
+           red = 0;
+
+        if (!(green & (1 << 7)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(green & (1 << 6)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(green & (1 << 5)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(green & (1 << 4)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(green & (1 << 3)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(green & (1 << 2)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(green & (1 << 1)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(green & (1 << 0)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+
+        if (!(red & (1 << 7)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(red & (1 << 6)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(red & (1 << 5)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(red & (1 << 4)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(red & (1 << 3)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(red & (1 << 2)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(red & (1 << 1)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(red & (1 << 0)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        
+        if (!(blue & (1 << 7)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(blue & (1 << 6)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(blue & (1 << 5)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(blue & (1 << 4)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(blue & (1 << 3)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(blue & (1 << 2)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(blue & (1 << 1)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
+
+        if (!(blue & (1 << 0)))
+            asm("bsf PORTA, 0\n bcf PORTA, 0\n");
+        else
+            asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
     }
 
-    TRISB = 0xFF;  // PortB as input
+    // deactivated to better encourage the next reset
+    //PORTAbits.RA0 = 1;
+
+    //led_off();
 }
 
-uint16_t flash_counter_ms;
-uint8_t flash_counter_step;
+void leds_init(void) {
+    TRISA = 0;  // PortA as output
 
-void lights_init(void) {
-    flash_counter_ms = 0;
-    flash_counter_step = 0;
-
-    lights_reset();
+    leds_reset(1);
+    leds_update();
 }
 
-light_state_t lights_state_h[64];
-light_state_t lights_state_l[64];
-
-void lights_reset(void) {
-    for (uint8_t i = 0; i < 64; i++) {
-        lights_state_h[i] = LIGHT_OFF;
-        lights_state_l[i] = LIGHT_OFF;
-    }
-
-    for (uint8_t i = 0; i < 16; i++)
-        banks_lights_state[i] = 0;
-
-    update();
-}
-
-void light_set(uint8_t light, light_state_t state) {
-    if (light >= 64)
-        lights_state_h[light-64] = state;
-    else
-        lights_state_h[light] = state;
-
-    uint8_t bank = light >> 3;
-    uint8_t bank_state = banks_lights_state[bank];
-    uint8_t light_bit = light & 0b111;
-
-    if (state == LIGHT_OFF)
-        bank_state &= ~(1 << light_bit);
-    else
-        bank_state |= (1 << light_bit);
-
-    banks_lights_state[bank] = bank_state;
-
-    update();
-}
-
-uint8_t rx_curlight = 0;
-inline void lights_rx(void) {
-    uint8_t rx_size = I2C_get_rx_buffer_size();
-    if (!rx_size)
+// led: 0..60, state: 0b00000RGB
+inline void leds_set(uint8_t led, uint8_t rgb) {
+    if (led >= LEDS_COUNT)
         return;
 
-    uint8_t rx_byte = I2C_get_rx_byte();
+    leds_state[led] = rgb;
+}
 
-    if (rx_byte & 0x80) {
-        // Set light index
-        rx_curlight = rx_byte & 0x7F;
-    } else {
-        // Set light value
-        light_set(rx_curlight, rx_byte);
+inline void leds_reset(uint8_t reset_tuning) {
+    for (uint8_t i = 0; i < LEDS_COUNT; i++)
+        leds_state[i] = 0;
+
+    if (reset_tuning) {
+        leds_red_value = LEDS_DEFAULT_RED_VALUE;
+        leds_green_value = LEDS_DEFAULT_RED_VALUE;
+        leds_blue_value = LEDS_DEFAULT_RED_VALUE;
     }
 }
 
-uint16_t lights_worker_timestamp_ms;
+inline void leds_tune_red(uint8_t red) {
+    leds_red_value = (uint8_t)(red << 4) + 0xF;
+}
 
-void lights_worker(void) {
-    lights_rx();
+inline void leds_tune_green(uint8_t green) {
+    leds_green_value = (uint8_t)(green << 4) + 0xF;
+}
 
-    uint16_t timestamp = Timer_count;
-
-    if (timestamp == lights_worker_timestamp_ms)
-        return;
-    lights_worker_timestamp_ms = timestamp;
-
-    //led_toggle();
-
-    flash_counter_ms++;
-    if (flash_counter_ms < LIGHTS_FLASH_HIGH_MS)
-        return;
-    flash_counter_ms  = 0;
-
-    uint8_t cur_light = 0;
-    for (uint8_t cur_bank = 0; cur_bank < 16; cur_bank++) {
-        uint8_t bank_state = banks_lights_state[cur_bank];
-
-        for (uint8_t cur_bit = 0; cur_bit < 8; cur_bit++) {
-            light_state_t light_state;
-            if (cur_light >= 64)
-                light_state = lights_state_h[cur_light-64];
-            else
-                light_state = lights_state_l[cur_light];
-            
-            switch (light_state) {
-                case LIGHT_OFF: 
-                    bank_state &= ~(1 << cur_bit);
-                    break;
-
-                case LIGHT_ON:
-                    bank_state |= (1 << cur_bit);
-                    break;
-
-                case LIGHT_FLASH_LOW:
-                    if (flash_counter_step < 2)
-                        bank_state |= (1 << cur_bit);
-                    else
-                        bank_state &= ~(1 << cur_bit);
-                    break;
-
-                case LIGHT_FLASH_HIGH:
-                    if (flash_counter_step & 1)
-                        bank_state &= ~(1 << cur_bit);
-                    else
-                        bank_state |= (1 << cur_bit);
-                    break;
-            }
-
-            cur_light++;
-        }
-
-        banks_lights_state[cur_bank] = bank_state;
-    }
-
-    flash_counter_step++;
-    if (flash_counter_step == 4)
-        flash_counter_step = 0;
-
-    update();
+inline void leds_tune_blue(uint8_t blue) {
+    leds_blue_value = (uint8_t)(blue << 4) + 0xF;
 }

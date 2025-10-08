@@ -76,28 +76,9 @@ void light_set(uint8_t light, light_state_t state) {
     update();
 }
 
-uint8_t rx_curlight = 0;
-inline void lights_rx(void) {
-    uint8_t rx_size = I2C_get_rx_buffer_size();
-    if (!rx_size)
-        return;
-
-    uint8_t rx_byte = I2C_get_rx_byte();
-
-    if (rx_byte & 0x80) {
-        // Set light index
-        rx_curlight = rx_byte & 0x7F;
-    } else {
-        // Set light value
-        light_set(rx_curlight, rx_byte);
-    }
-}
-
 uint16_t lights_worker_timestamp_ms;
 
 void lights_worker(void) {
-    lights_rx();
-
     uint16_t timestamp = Timer_count;
 
     if (timestamp == lights_worker_timestamp_ms)

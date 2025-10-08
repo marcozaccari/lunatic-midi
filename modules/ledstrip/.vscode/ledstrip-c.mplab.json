@@ -58,6 +58,8 @@
             "files": [
                 "src/main.h",
                 "src/main.c",
+                "src/demo.h",
+                "src/demo.c",
                 "src/leds.c",
                 "src/leds.h",
                 "src/device.h",

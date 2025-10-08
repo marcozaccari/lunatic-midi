@@ -52,6 +52,23 @@ void hello() {
     led_on();
 }
 
+uint8_t rx_curlight = 0;
+inline void i2c_rx(void) {
+    uint8_t rx_size = I2C_get_rx_buffer_size();
+    if (!rx_size)
+        return;
+
+    uint8_t rx_byte = I2C_get_rx_byte();
+
+    if (rx_byte & 0x80) {
+        // Set light index
+        rx_curlight = rx_byte & 0x7F;
+    } else {
+        // Set light value
+        light_set(rx_curlight, rx_byte);
+    }
+}
+
 int main(void) {
     device_init();
     
@@ -83,6 +100,7 @@ int main(void) {
 
         //led_toggle();
 
+        i2c_rx();
         buttons_worker();
         lights_worker();
     }

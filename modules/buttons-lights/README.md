@@ -9,6 +9,7 @@ Button and light controller (buttons with built-in lights), compatible with deco
 ## Measurements
 
 - full buttons scan + lights refresh: ~200us
+- buttons antibounce: ~7ms
 
 ## I2C protocol
 
