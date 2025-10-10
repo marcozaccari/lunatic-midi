@@ -13,8 +13,7 @@ const (
 
 	LedsMaxSendBytesPerLoop = 16 // 16*8*2.5 = 320us
 
-	LedsWritesDelayMs = 3 // needs a delay of 2.5ms after every update
-
+	LedsWritesDelayMs = 3 // needs a delay of 3ms after every update
 )
 
 type LedColor byte
@@ -35,7 +34,9 @@ type LedStripDevice struct {
 
 	offset int
 
-	mu sync.RWMutex
+	mu                                     sync.RWMutex
+	needsUpdate                            bool
+	needsUpdateStartLed, needsUpdateEndLed int
 	framebuffer,
 
 	framebufferLast [LedCount]LedColor
@@ -58,7 +59,11 @@ func NewLedStrip(i2cAddr byte, offset int) (*LedStripDevice, error) {
 		dev.framebufferLast[x] = LedOff
 	}
 
-	// reset led controller
+	dev.needsUpdate = false
+	dev.needsUpdateStartLed = 0xFF
+	dev.needsUpdateEndLed = 0
+
+	// reset controller
 	buffer := [1]byte{0xFF}
 	err = dev.i2c.Write(buffer[:], 1)
 	if err != nil {
@@ -81,6 +86,10 @@ func (dev *LedStripDevice) Fill(color LedColor) {
 	for x := 0; x < LedCount; x++ {
 		dev.framebuffer[x] = color
 	}
+
+	dev.needsUpdate = true
+	dev.needsUpdateStartLed = 0
+	dev.needsUpdateEndLed = LedCount
 }
 
 func (dev *LedStripDevice) Set(index int, color LedColor) {
@@ -94,6 +103,14 @@ func (dev *LedStripDevice) Set(index int, color LedColor) {
 	}
 
 	dev.framebuffer[index] = color
+
+	dev.needsUpdate = true
+	if index < dev.needsUpdateStartLed {
+		dev.needsUpdateStartLed = index
+	}
+	if index > dev.needsUpdateEndLed {
+		dev.needsUpdateEndLed = index
+	}
 }
 
 func (dev *LedStripDevice) Blink(index int, color LedColor, count int, on, off time.Duration) {
@@ -137,36 +154,43 @@ func (dev *LedStripDevice) work() (bool, error) {
 
 	dev.mu.RLock()
 
-	for x := 0; x < LedCount; x++ {
-		if dev.framebuffer[x] != dev.framebufferLast[x] {
-			buffer[buffLen] = byte(x) | 0x80
-			buffLen++
-			buffer[buffLen] = byte(dev.framebuffer[x])
-			buffLen++
+	if !dev.needsUpdate {
+		dev.mu.RUnlock()
+		return true, nil
+	}
 
-			dev.framebufferLast[x] = dev.framebuffer[x]
+	ledsToUpdate := dev.needsUpdateEndLed - dev.needsUpdateStartLed + 1
+	if ledsToUpdate%2 == 1 {
+		ledsToUpdate++
+	}
 
-			if buffLen >= LedsMaxSendBytesPerLoop {
-				break
-			}
-		}
+	buffer[buffLen] = 0x40 + byte(dev.needsUpdateStartLed)
+	buffLen++
+
+	x := dev.needsUpdateStartLed
+	for i := 0; i < ledsToUpdate/2; i++ {
+		buffer[buffLen] = byte(dev.framebuffer[x])<<3 + byte(dev.framebuffer[x+1])
+		buffLen++
+		x += 2
 	}
 
 	dev.mu.RUnlock()
 
-	if buffLen > 0 {
-		// add repaint command
-		buffer[buffLen] = 0x40
-		buffLen++
+	// add repaint command
+	buffer[buffLen] = 0xC1
+	buffLen++
 
-		err := dev.i2c.Write(buffer[:], buffLen)
+	err := dev.i2c.Write(buffer[:], buffLen)
 
-		dev.nextWrite = time.Now().Add(time.Millisecond * LedsWritesDelayMs)
+	dev.nextWrite = time.Now().Add(time.Millisecond * LedsWritesDelayMs)
 
-		if err != nil {
-			return true, fmt.Errorf("%s (%d bytes)", err, buffLen)
-		}
+	if err != nil {
+		return true, fmt.Errorf("%s (%d bytes)", err, buffLen)
 	}
+
+	dev.needsUpdate = false
+	dev.needsUpdateStartLed = 0xFF
+	dev.needsUpdateEndLed = 0
 
 	return true, nil
 }

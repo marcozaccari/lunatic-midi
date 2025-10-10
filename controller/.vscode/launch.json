@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch main (debug)",
+            "name": "linear-keyboard",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -19,25 +19,58 @@
             //"logOutput": "rpc"
         },
         {
-            "name": "Launch main",
+            "name": "test: keyboard",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}",
+            "program": "${workspaceFolder}/test/devices/keyboard",
             "env": {},
-            //"buildFlags": "-race", // unsupported for raspberry :(
-            "args": ["-config-file=${workspaceFolder}/bin/linear-keyboard.json"],
-            //"showLog": true,
-            //"trace": "log",
-            //"logOutput": "rpc"
+            "args": ["-i2c-address=0x30"],
         },
-         {
-            "name": "Launch file",
+        {
+            "name": "test: buttons",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/test/devices/buttons",
+            "env": {},
+            "args": ["-i2c-address=0x31"],
+        },
+        {
+            "name": "test: ledstrip",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/test/devices/ledstrip",
+            "env": {},
+            "args": ["-i2c-address=0x33"],
+        },
+        {
+            "name": "test: adc",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/test/devices/adc",
+            "env": {},
+            "args": ["-i2c-address=0x48"],
+        },
+        {
+            "name": "test: display",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/test/devices/display",
+            "env": {},
+            //"args": ["-i2c-address=0x33"],
+        },
+        {
+            "name": "Current file",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${file}",
             "env": {},
+            //"cwd": "${file}"
         },
   ]
 }

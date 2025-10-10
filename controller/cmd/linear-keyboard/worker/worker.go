@@ -91,7 +91,7 @@ func (w *Worker) work() {
 		case ev := <-w.events.Buttons:
 			logs.Debugf("buttons event: %v", ev)
 
-			if ev.Button == ButLight0+7 && ev.State {
+			if ev.Button == ButLight0+7 {
 				// Split
 				if w.splitKey == 0 {
 					w.devs.Buttons.SetLight(7, true)

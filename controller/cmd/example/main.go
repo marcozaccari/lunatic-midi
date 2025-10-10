@@ -137,7 +137,7 @@ func work() {
 
 		case ev := <-events.Buttons:
 			logs.Debugf("buttons event: %v", ev)
-			buttons.SetLight(ev.Button, ev.State)
+			buttons.SetLight(ev.Button, true)
 
 		case <-stopChan:
 			return

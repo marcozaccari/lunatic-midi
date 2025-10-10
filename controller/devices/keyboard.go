@@ -1,7 +1,5 @@
 package devices
 
-// I2C @ 320KHz: ~46us per bytes, 300/370us reading single note (~100 for query and ~200 to get 2 bytes of data)
-
 import (
 	"embed"
 	"errors"
@@ -47,8 +45,8 @@ func NewKeyboard(i2cAddr byte, KeyOffset int) (*KeyboardDevice, error) {
 		return nil, err
 	}
 
-	// disable velocity on note-off
-	buffer := [1]byte{0x80}
+	// Reset controller
+	buffer := [1]byte{0xFF}
 	err = dev.i2c.Write(buffer[:], 1)
 	if err != nil {
 		return nil, err
@@ -179,7 +177,8 @@ func (dev *KeyboardDevice) parse(b byte) {
 		}
 
 	} else {
-		velocity = 127 - b + 1
+		//velocity = 127 - b + 1
+		velocity = b + 1
 		if velocity > 127 {
 			velocity = 127
 		}

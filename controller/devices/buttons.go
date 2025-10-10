@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/marcozaccari/lunatic-midi/devices/hardware"
-	"github.com/modulo-srl/sparalog/logs"
 )
 
 const (
-	MaxButtons       = 128
+	MaxButtons       = 130
 	MaxButtonsEvents = 32
 
 	ButtonsMaxSendBytesPerLoop = 16 // 16*8*2.5 = 320us
@@ -20,8 +19,6 @@ const (
 
 type ButtonsDevice struct {
 	i2c hardware.I2C
-
-	lastState [MaxButtons]bool
 
 	lastRead time.Time
 
@@ -44,7 +41,7 @@ func NewButtons(i2cAddr byte, BtnOffset int) (*ButtonsDevice, error) {
 		return nil, err
 	}
 
-	// Reset led
+	// Reset controller
 	buffer := [1]byte{0xFF}
 	err = dev.i2c.Write(buffer[:], 1)
 	if err != nil {
@@ -102,30 +99,16 @@ func (dev *ButtonsDevice) work() (bool, error) {
 	}
 
 	for k := 1; k < size+1; k++ {
-		if buffer[k] != 0xFF {
-			b = buffer[k]
+		if buffer[k] == 0xFF {
+			continue
+		}
 
-			var state bool
+		b = buffer[k]
 
-			if (b & 0x80) == 0x80 {
-				state = true
-				b = b & 0x7F
-			} else {
-				state = false
-			}
-			button := int(b) + 1 // 1..
+		button := int(b) + 1 // 1..
 
-			if dev.lastState[button] == state {
-				// Firmware or hardware error
-				logs.Warningf("buttons: ignoring invalid button %d = %v", button, state)
-				continue
-			}
-			dev.lastState[button] = state
-
-			dev.events <- ButtonEvent{
-				Button: dev.btnOffset + button, // 1..MaxButtons
-				State:  state,
-			}
+		dev.events <- ButtonEvent{
+			Button: dev.btnOffset + button, // 1..MaxButtons
 		}
 	}
 

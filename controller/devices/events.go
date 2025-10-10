@@ -22,7 +22,6 @@ type KeyboardEvents chan KeyboardEvent
 
 type ButtonEvent struct {
 	Button int // 1..MaxButtons
-	State  bool
 }
 type ButtonsEvents chan ButtonEvent
 

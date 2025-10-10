@@ -8,6 +8,8 @@ require (
 	github.com/modulo-srl/mu-config v1.0.12
 	github.com/modulo-srl/sparalog v1.0.3
 	gitlab.com/gomidi/midi/v2 v2.3.16
+	periph.io/x/conn/v3 v3.7.2
+	periph.io/x/host/v3 v3.8.5
 )
 
 require (

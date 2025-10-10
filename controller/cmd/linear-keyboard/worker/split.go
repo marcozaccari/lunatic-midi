@@ -21,10 +21,8 @@ func (w *Worker) getSplit() {
 			}
 			return
 
-		case ev := <-w.events.Buttons:
-			if ev.State {
-				return // cancel
-			}
+		case <-w.events.Buttons:
+			return // cancel
 
 		case <-w.events.Analog:
 			// discard

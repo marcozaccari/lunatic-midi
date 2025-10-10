@@ -31,7 +31,7 @@ func work() {
 		return
 	}
 
-	//printf("received %d bytes", size)
+	fmt.Printf("received %d bytes\n", size)
 
 	//err = i2c.Read(buffer[:], size+1)
 	err = i2c.Read(buffer[:], size+1)
@@ -39,6 +39,7 @@ func work() {
 		fmt.Printf("\nError reading data: %s\n", err)
 		return
 	}
+
 	//if buffer[0] != 1 {
 	//	fmt.Printf("\nError reading data (header): %X\n", buffer[0])
 	//return
@@ -46,21 +47,25 @@ func work() {
 
 	var b byte
 	for k := 1; k < size+1; k++ {
-		if buffer[k] != 0xFF {
-			b = buffer[k]
-			fmt.Printf("0x%02X ", buffer[k])
+		b = buffer[k]
 
-			if !testing {
-				testing = true
-				last_byte = b
-			} else {
-				if !((b == 1) && (last_byte == 90)) && (b != last_byte+1) {
-					//if b != 0x23 {
-					fmt.Printf("\nORDER MISMATCH!\n")
-				}
+		if b == 0xFF {
+			fmt.Printf("\nProtocol error! (unexpected 0xFF)\n")
+			continue
+		}
 
-				last_byte = b
+		fmt.Printf("0x%02X ", buffer[k])
+
+		if !testing {
+			testing = true
+			last_byte = b
+		} else {
+			if !((b == 1) && (last_byte == 90)) && (b != last_byte+1) {
+				//if b != 0x23 {
+				fmt.Printf("\nORDER MISMATCH!\n")
 			}
+
+			last_byte = b
 		}
 	}
 }
@@ -74,7 +79,7 @@ func main() {
 	testing = false
 
 	// Call every 30 ms
-	ticker := time.NewTicker(30 * time.Millisecond)
+	ticker := time.NewTicker(20 * time.Millisecond)
 	defer ticker.Stop()
 
 	for range ticker.C {
