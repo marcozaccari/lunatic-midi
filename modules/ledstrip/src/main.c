@@ -72,6 +72,13 @@ inline void i2c_rx(void) {
         leds_reset(0);
         leds_update();
         rx_led_idx = 0;
+
+        I2C_reset();
+       
+        // Send firmware version
+        uint8_t size = sizeof(VERSION);
+        for (uint8_t i = 0; i < size; i++)
+            I2C_tx(VERSION[i]);
         return;
     }
 
@@ -94,9 +101,15 @@ inline void i2c_rx(void) {
         return;
     }
 
-    if (rx_byte <= 7) {
-        // Set led color
-        leds_set(rx_led_idx, rx_byte);
+    if (rx_byte <= 0x3F) {
+        // Set two leds color
+        uint8_t col = rx_byte >> 3;
+        leds_set(rx_led_idx, col);
+        rx_led_idx++;
+
+        col = rx_byte & 0b111;
+        leds_set(rx_led_idx, col);
+        rx_led_idx++;
         return;
     }
 

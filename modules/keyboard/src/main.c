@@ -32,6 +32,11 @@ inline void i2c_rx(void) {
     if (rx_byte == 0xFF) {
         // Reset
         I2C_reset();
+
+        // Send firmware version
+        uint8_t size = sizeof(VERSION);
+        for (uint8_t i = 0; i < size; i++)
+            I2C_tx(VERSION[i]);
         return;
     }
 }

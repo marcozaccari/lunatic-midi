@@ -8,25 +8,19 @@
 uint8_t buttons_current_state[16];
 uint8_t buttons_last_state[16];
 
-#define ANTIBOUNCE_MS 7
-uint16_t antibounce_counter;
+#define BUTTONS_ANTIBOUNCE_MS 7
+uint16_t buttons_antibounce_counter;
 
-/*******************************************************************************
- * A0..A3 = bank selector (0..15)
- * A4     = buttons / leds selector 
- * A5     = leds latch (off/on - default)
- * B0..B7 = bank buttons state (0 = button released, 1 = button pressed)
-*/
 void buttons_init(void) {
-    // PORT A - decoder address (bank selection)
-    TRISA0 = 0; // A0 as output
-    TRISA1 = 0; // A1 as output
-    TRISA2 = 0; // A2 as output
-    TRISA3 = 0; // A3 as output
-    TRISA4 = 0; // A4 as output
-    TRISA5 = 0; // A5 as output
+    // Set pins as outputs
+    BUTTONS_BANK_SELECTOR_PIN_0_TRIS = 0;
+    BUTTONS_BANK_SELECTOR_PIN_1_TRIS = 0;
+    BUTTONS_BANK_SELECTOR_PIN_2_TRIS = 0;
+    BUTTONS_BANK_SELECTOR_PIN_3_TRIS = 0;
+    BUTTONS_LED_SELECTOR_PIN_TRIS = 0;
+    BUTTONS_LEDS_LATCH_PIN_TRIS = 0;
 
-    PORTA = 0b00100000; // LEDS latch high
+    BUTTONS_LEDS_LATCH_PIN = 1;  // leds latch high
 
     // PORT B - decoder status lines (bank buttons state)
     TRISB = 0xFF; // PortB as input
@@ -39,7 +33,7 @@ void buttons_init(void) {
         buttons_last_state[i] = 0;
     }
 
-    antibounce_counter = 0;
+    buttons_antibounce_counter = 0;
 }
 
 uint16_t buttons_worker_timestamp_ms;
@@ -48,12 +42,16 @@ uint16_t buttons_worker_timestamp_ms;
 inline void buttons_scan(void) {
     TRISB = 0xFF;  // PortB as input
 
+    BUTTONS_LED_SELECTOR_PIN = 0;  // enable buttons/disable leds
+    BUTTONS_LEDS_LATCH_PIN = 1;  // leds latch high
+
     for (uint8_t cur_bank = 0; cur_bank < 16; cur_bank++) {
         // select buttons bank
-        uint8_t addr = cur_bank;
-        addr |= 0b00100000; // leds latch high
-        PORTA = addr;
-        
+        BUTTONS_BANK_SELECTOR_PIN_0 = (cur_bank) & 1;
+        BUTTONS_BANK_SELECTOR_PIN_1 = (cur_bank >> 1) & 1;
+        BUTTONS_BANK_SELECTOR_PIN_2 = (cur_bank >> 2) & 1;
+        BUTTONS_BANK_SELECTOR_PIN_3 = (cur_bank >> 3) & 1;
+
         __delay_us(4);  // wait 4us in order to discarge the pull-ups
 
         uint8_t current_state = ~PORTB;  // get buttons status by PORTB (inverted)
@@ -74,11 +72,13 @@ inline void buttons_worker(void) {
 
     buttons_scan();
 
-    if (antibounce_counter < ANTIBOUNCE_MS) {
-        antibounce_counter++;
+    if (buttons_antibounce_counter < BUTTONS_ANTIBOUNCE_MS) {
+        buttons_antibounce_counter++;
         return;
     }
-    antibounce_counter = 0;
+    buttons_antibounce_counter = 0;
+
+    buttons_scan();
 
     // Check for buttons changes
 
@@ -100,7 +100,7 @@ inline void buttons_worker(void) {
         //led_toggle();
 
         uint8_t changes_on = changes & current_state; // 0 -> 1 variations
-        uint8_t changes_off = changes & last_state; // 1 -> 0 variations
+        //uint8_t changes_off = changes & last_state; // 1 -> 0 variations
 
         buttons_last_state[cur_bank] = current_state;  // Save current state as last
 
@@ -111,17 +111,14 @@ inline void buttons_worker(void) {
                 // Button pressed
 
                 // send button ON event
-                I2C_tx(cur_button | 0b10000000);  // button index = 1XXXXXXX
+                I2C_tx(cur_button);
                 led_toggle();
             }
 
-            if (changes_off & (1 << i)) {
+            /*if (changes_off & (1 << i)) {
                 // Button released
-
-                // send button OFF event
-                I2C_tx(cur_button);  // button index = 0XXXXXXX
                 led_toggle();
-            }
+            }*/
 
             cur_button++;
         }

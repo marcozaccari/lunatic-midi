@@ -23,9 +23,7 @@ Commands:
                             NB: please wait at least 3ms after reset request
 
     0b01IIIIII (0x40..0x7F) Set led index to I (00..59)
-    0b00000RGB (0x00..0x07) Set (current index) led color 
-
-    0b11001RGB (0xC8..0xCF) Fill all leds with CC color
+    0b00RGBrgb (0x00..0x3F) Set two led colors starting to current index (and advance led index + 2)
 
     0b11000001 (0xC1)       Repaint request (confirm updates and reset led index = 0)
                             NB: please wait at least 3ms after repaint request
@@ -33,3 +31,10 @@ Commands:
     0b1000RRRR (0x80..0x8F) Tune R (color will be set to RRRR0000)
     0b1001GGGG (0x90..0x9F) Tune G (color will be set to GGGG0000)
     0b1010BBBB (0xA0..0xAF) Tune B (color will be set to BBBB0000)
+
+### Reset command
+
+Master: `<ADDRESS> 0xFF` (and wait at least 10ms)
+Slave: `<STR_LEN> <FIRMWARE_VERSION> 0x00`
+
+After the reset command the Master waits at least 3ms and receive the firmware version.

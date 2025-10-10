@@ -12,7 +12,7 @@ inline void leds_update() {
     //led_on();
 
     // ws2812 reset (above 50 us)
-    PORTAbits.RA0 = 0;
+    LEDS_DATA_PIN = 0;
     __delay_us(50);
 
     for (uint8_t cur_led = 0; cur_led < LEDS_COUNT; cur_led++) {
@@ -35,9 +35,9 @@ inline void leds_update() {
         else
            red = 0;
 
-        if (!(green & (1 << 7)))
+        if (!(green & (1 << 7))) {
             asm("bsf PORTA, 0\n bcf PORTA, 0\n");
-        else
+        }else
             asm("bsf PORTA, 0\n nop\n nop\n bcf PORTA, 0\n");
 
         if (!(green & (1 << 6)))
@@ -165,7 +165,7 @@ inline void leds_update() {
 }
 
 void leds_init(void) {
-    TRISA = 0;  // PortA as output
+    LEDS_DATA_PIN_TRIS = 0;  // data pin as output
 
     leds_reset(1);
     leds_update();

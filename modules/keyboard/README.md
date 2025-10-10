@@ -33,3 +33,10 @@ Master: `<ADDRESS> <COMMAND> ...` continues writing data if necessary
 Commands:
 
     0b11111111 (0xFF) Reset
+
+#### Reset command
+
+Master: `<ADDRESS> 0xFF` (and wait at least 10ms)
+Slave: `<STR_LEN> <FIRMWARE_VERSION> 0x00`
+
+After the reset command the Master waits at least 10ms and receive the firmware version.

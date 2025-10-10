@@ -1,6 +1,7 @@
 #include "main.h"
 #include "device.h"
 #include "buttons.h"
+#include "encoder.h"
 #include "i2c.h"
 #include "lights.h"
 #include "timers.h"
@@ -63,6 +64,11 @@ inline void i2c_rx(void) {
     if (rx_byte == 0xFF) {
         // Reset
         I2C_reset();
+
+        // Send firmware version
+        uint8_t size = sizeof(VERSION);
+        for (uint8_t i = 0; i < size; i++)
+            I2C_tx(VERSION[i]);
         return;
     }
 
@@ -82,6 +88,7 @@ int main(void) {
     I2C_init();
     timers_init();
     buttons_init();
+    encoder_init();
     lights_init();
 
     PIR1bits.SSPIF = 0; // Clear I2C interrupt flag
@@ -109,6 +116,7 @@ int main(void) {
 
         i2c_rx();
         buttons_worker();
+        encoder_worker();
         lights_worker();
     }
     

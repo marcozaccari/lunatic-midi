@@ -2,8 +2,9 @@
 
 Button and light controller (buttons with built-in lights), compatible with decoder boards.
 
-- 127 independent buttons
-- led flashing
+- 128 independent buttons and lights
+- lights flashing
+- encoder: left, right, push button
 - I2C interrupt based
 
 ## Measurements
@@ -16,10 +17,14 @@ Button and light controller (buttons with built-in lights), compatible with deco
 ### Receive buttons events
 
 Master: `<ADDRESS> ...` continues reading data if necessary
-Slave (this device): `<DATA AVAIL LENGTH> <BUTTON ON/OFF> ...`
+Slave (this device): `<DATA AVAIL LENGTH> <BUTTON ON> ...`
 
-Button ON/OFF:
-`0bXNNNNNNN`  `X` = Button Off/On   `NNNNNNN` = Button index (0..127)
+Buttons mapping:
+
+    0..127 = Normal button
+    128    = Encoder left
+    129    = Encoder right
+    130    = Encoder button
 
 If Master tries to read more than what is available in the slave's buffer, the slave responds with `0xFF` values.
 
@@ -36,3 +41,10 @@ Commands:
                             1 = ON  
                             2 = FLASH HIGH  
                             3 = FLASH LOW
+
+#### Reset command
+
+Master: `<ADDRESS> 0xFF` (and wait at least 10ms)
+Slave: `<STR_LEN> <FIRMWARE_VERSION> 0x00`
+
+After the reset command the Master waits at least 10ms and receive the firmware version.

@@ -1,5 +1,6 @@
 #include "lights.h"
 #include "main.h"
+#include "buttons.h"
 #include "timers.h"
 #include "i2c.h"
 #include "device.h"
@@ -10,10 +11,14 @@ void update() {
     TRISB = 0; // PortB as output
 
     for (uint8_t cur_bank = 0; cur_bank < 16; cur_bank++) {
+        BUTTONS_LED_SELECTOR_PIN = 1;  // enable leds/disable buttons
+        BUTTONS_LEDS_LATCH_PIN = 0;  // leds latch low
 
-        uint8_t addr = 0b00010000; // enable leds / disable buttons, leds latch low
-        addr |= cur_bank;  // select output bank
-        PORTA = addr;
+        // select leds bank
+        BUTTONS_BANK_SELECTOR_PIN_0 = (cur_bank) & 1;
+        BUTTONS_BANK_SELECTOR_PIN_1 = (cur_bank >> 1) & 1;
+        BUTTONS_BANK_SELECTOR_PIN_2 = (cur_bank >> 2) & 1;
+        BUTTONS_BANK_SELECTOR_PIN_3 = (cur_bank >> 3) & 1;
 
         uint8_t bank_state = banks_lights_state[cur_bank];
         #ifdef PROGRAMMER_CONNECTED
@@ -24,7 +29,7 @@ void update() {
         PORTB = ~bank_state;
         __delay_us(2);  
 
-        PORTAbits.RA5 = 1; // leds latch high
+        BUTTONS_LEDS_LATCH_PIN = 1;  // leds latch high
         __delay_us(2);  
     }
 

@@ -60,6 +60,8 @@
                 "src/main.c",
                 "src/buttons.c",
                 "src/buttons.h",
+                "src/encoder.c",
+                "src/encoder.h",
                 "src/lights.c",
                 "src/lights.h",
                 "src/device.h",

@@ -5,6 +5,10 @@
 
 #define LEDS_COUNT 60
 
+// Do not change! (PORTA hardcoded in assembly)
+#define LEDS_DATA_PIN       RA0
+#define LEDS_DATA_PIN_TRIS  TRISA0
+
 void leds_init(void);
 
 inline void leds_reset(uint8_t reset_tuning);

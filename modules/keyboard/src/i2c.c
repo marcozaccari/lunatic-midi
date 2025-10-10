@@ -1,27 +1,26 @@
 #include "i2c.h"
 #include "device.h"
+#include "main.h"
 
 // Circular buffers
-#define TXRX_BUFFER_SIZE 32
-
-volatile uint8_t tx_buffer[TXRX_BUFFER_SIZE];
+volatile uint8_t tx_buffer[I2C_TX_BUFFER_SIZE];
 volatile uint8_t tx_buffer_head;
 volatile uint8_t tx_buffer_tail;
 
-volatile uint8_t rx_buffer[TXRX_BUFFER_SIZE];
+volatile uint8_t rx_buffer[I2C_RX_BUFFER_SIZE];
 volatile uint8_t rx_buffer_head;
 volatile uint8_t rx_buffer_tail;
 
 // Add a byte to the TX buffer.
 inline void I2C_tx(uint8_t byte) {
     tx_buffer[tx_buffer_head] = byte;
-    tx_buffer_head = (tx_buffer_head + 1) % TXRX_BUFFER_SIZE;
+    tx_buffer_head = (tx_buffer_head + 1) % I2C_TX_BUFFER_SIZE;
 }
 
 // Add a byte to the RX buffer.
 inline void I2C_rx(uint8_t byte) {
     rx_buffer[rx_buffer_head] = byte;
-    rx_buffer_head = (rx_buffer_head + 1) % TXRX_BUFFER_SIZE;
+    rx_buffer_head = (rx_buffer_head + 1) % I2C_RX_BUFFER_SIZE;
 }
 
 // Get the number of bytes in the TX buffer.
@@ -29,7 +28,7 @@ inline uint8_t I2C_get_tx_buffer_size() {
     if (tx_buffer_head >= tx_buffer_tail) {
         return tx_buffer_head - tx_buffer_tail;
     } else {
-        return TXRX_BUFFER_SIZE - (tx_buffer_tail - tx_buffer_head);
+        return I2C_TX_BUFFER_SIZE - (tx_buffer_tail - tx_buffer_head);
     }    
 }
 
@@ -38,7 +37,7 @@ inline uint8_t I2C_get_rx_buffer_size() {
     if (rx_buffer_head >= rx_buffer_tail) {
         return rx_buffer_head - rx_buffer_tail;
     } else {
-        return TXRX_BUFFER_SIZE - (rx_buffer_tail - rx_buffer_head);
+        return I2C_RX_BUFFER_SIZE - (rx_buffer_tail - rx_buffer_head);
     }    
 }
 
@@ -51,7 +50,7 @@ inline uint8_t I2C_get_tx_byte() {
     }
 
     uint8_t byte = tx_buffer[tx_buffer_tail];
-    tx_buffer_tail = (tx_buffer_tail + 1) % TXRX_BUFFER_SIZE;
+    tx_buffer_tail = (tx_buffer_tail + 1) % I2C_TX_BUFFER_SIZE;
 
     return byte;
 }
@@ -65,7 +64,7 @@ inline uint8_t I2C_get_rx_byte() {
     }
 
     uint8_t byte = rx_buffer[rx_buffer_tail];
-    rx_buffer_tail = (rx_buffer_tail + 1) % TXRX_BUFFER_SIZE;
+    rx_buffer_tail = (rx_buffer_tail + 1) % I2C_RX_BUFFER_SIZE;
 
     return byte;
 }
@@ -85,12 +84,12 @@ void I2C_init(void) {
     // Set slave address
     uint8_t address = I2C_ADDRESS_BASE;
 
-    I2C_ADDRESS_ADD_TRIS_PIN1 = 1; // set pin as input
-    I2C_ADDRESS_ADD_TRIS_PIN2 = 1; // set pin as input
+    I2C_ADDRESS_TRIS_PIN1 = 1; // set pin as input
+    I2C_ADDRESS_TRIS_PIN2 = 1; // set pin as input
 
-    address = I2C_ADDRESS_ADD_PIN2;
+    address = I2C_ADDRESS_PIN2;
     address <<= 1;
-    address += I2C_ADDRESS_ADD_PIN1;
+    address += I2C_ADDRESS_PIN1;
     address += 0x30;
 
     SSPADD = (uint8_t)(address << 1); // slave address (7 bit) + R/W = 0

@@ -1,7 +1,10 @@
 #ifndef MAIN_H
 #define	MAIN_H
 
-#define VERSION 1.0
+#define VERSION "Buttons-Lights v1.0"
+
+#define I2C_TX_BUFFER_SIZE 64
+#define I2C_RX_BUFFER_SIZE 64
 
 // Enable when PicKit debugger is connected to the board
 //#define PROGRAMMER_CONNECTED
